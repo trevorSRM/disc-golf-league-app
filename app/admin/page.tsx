@@ -10,10 +10,14 @@ import {
   getPlayerMoneyRankings
 } from "@/lib/data"
 import { AdminDashboard } from "@/components/admin/admin-dashboard"
+import { redirect } from "next/navigation"
+import { isAdminSession } from "@/lib/admin-auth"
 
 export const dynamic = "force-dynamic"
 
 export default async function AdminPage() {
+  if (!(await isAdminSession())) redirect("/")
+
   const [players, events, currentEvent, finances, calculatedFinances, aces, handicaps, moneyRankings] = await Promise.all([
     getPlayers(),
     getWeeks(),

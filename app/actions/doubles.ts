@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { requireAdmin } from "@/lib/admin-auth"
 import { revalidatePath } from "next/cache"
 import { DoublesEvent } from "@/lib/types"
 
@@ -9,6 +10,7 @@ export async function createDoublesEvent(
   courseName: string | null
 ): Promise<{ success: boolean; event?: DoublesEvent; error?: string }> {
   try {
+    await requireAdmin()
     const supabase = await createClient()
     
     const { data, error } = await supabase
@@ -37,6 +39,7 @@ export async function deleteDoublesEvent(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireAdmin()
     const supabase = await createClient()
     
     // Delete teams first
@@ -65,6 +68,7 @@ export async function saveDoublesTeams(
   teams: { player1_id: string; player2_id: string; team_handicap: number }[]
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireAdmin()
     const supabase = await createClient()
     
     // Delete existing teams for this event
@@ -101,6 +105,7 @@ export async function updateDoublesScores(
   teams: { id: string; score: number | null }[]
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireAdmin()
     const supabase = await createClient()
     
     for (const team of teams) {

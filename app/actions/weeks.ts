@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { requireAdmin } from "@/lib/admin-auth"
 import { revalidatePath } from "next/cache"
 import { Week } from "@/lib/types"
 
@@ -11,6 +12,7 @@ export async function createWeek(
   isDoubles: boolean = false
 ): Promise<{ success: boolean; week?: Week; error?: string }> {
   try {
+    await requireAdmin()
     const supabase = await createClient()
     
     const { data, error } = await supabase
@@ -41,6 +43,7 @@ export async function getWeekAttendance(
   weekId: string
 ): Promise<{ player_id: string; player_name: string; score: number | null; sanctioned: boolean }[]> {
   try {
+    await requireAdmin()
     const supabase = await createClient()
     
     const { data, error } = await supabase
@@ -67,6 +70,7 @@ export async function updateWeek(
   data: { date?: string; course_name?: string | null; ctp_winner_id?: string | null }
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireAdmin()
     const supabase = await createClient()
     
     const { error } = await supabase
@@ -92,6 +96,7 @@ export async function deleteWeek(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireAdmin()
     const supabase = await createClient()
     
     // Delete attendance first (cascade should handle this, but being explicit)
@@ -120,6 +125,7 @@ export async function updateAttendance(
   attendanceData: { player_id: string; score: number | null; sanctioned?: boolean }[]
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireAdmin()
     const supabase = await createClient()
     
     // Delete existing attendance for this week
@@ -158,6 +164,7 @@ export async function updateCTPWinner(
   playoffWinnerId: string | null = null
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireAdmin()
     const supabase = await createClient()
     
     const { error } = await supabase
@@ -186,6 +193,7 @@ export async function saveDoublesTeams(
   teams: { player1_id: string; player2_id: string; team_handicap: number }[]
 ): Promise<{ success: boolean; error?: string; teams?: { id: string; player1_id: string; player2_id: string }[] }> {
   try {
+    await requireAdmin()
     const supabase = await createClient()
     
     // Delete existing teams for this week
@@ -226,6 +234,7 @@ export async function updateDoublesTeamScore(
   score: number | null
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireAdmin()
     const supabase = await createClient()
     
     const { error } = await supabase
@@ -252,6 +261,7 @@ export async function saveCards(
   cardAssignments: { hole: number; players: string[]; teams?: { player1_id: string; player2_id: string }[] }[]
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireAdmin()
     const supabase = await createClient()
     
     const { error } = await supabase
@@ -281,6 +291,7 @@ export async function submitEvent(
   eventId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireAdmin()
     const supabase = await createClient()
     
     const { error } = await supabase
@@ -310,6 +321,7 @@ export async function updateDoublesCTPAndScoringType(
   playoffWinnerTeamId: string | null = null
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireAdmin()
     const supabase = await createClient()
     
     const { error } = await supabase

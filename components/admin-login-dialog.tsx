@@ -30,10 +30,8 @@ export function AdminLoginDialog({ open, onOpenChange }: AdminLoginDialogProps) 
     setLoading(true)
     setError(false)
 
-    // Small delay for UX
-    await new Promise(resolve => setTimeout(resolve, 300))
 
-    const success = login(password)
+    const success = await login(password)
     if (success) {
       setPassword("")
       onOpenChange(false)

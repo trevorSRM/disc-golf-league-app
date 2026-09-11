@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { requireAdmin } from "@/lib/admin-auth"
 import { revalidatePath } from "next/cache"
 import { LeagueFinances } from "@/lib/types"
 
@@ -8,6 +9,7 @@ export async function updateFinances(
   updates: Partial<LeagueFinances>
 ): Promise<{ success: boolean; finances?: LeagueFinances; error?: string }> {
   try {
+    await requireAdmin()
     const supabase = await createClient()
     
     // Get existing finances
@@ -63,6 +65,7 @@ export async function deleteAce(
   aceId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireAdmin()
     const supabase = await createClient()
     
     const { error } = await supabase
@@ -91,6 +94,7 @@ export async function recordAce(
   courseName: string | null
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireAdmin()
     const supabase = await createClient()
     
     // Record the ace

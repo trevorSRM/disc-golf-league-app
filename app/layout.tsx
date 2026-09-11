@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { AdminProvider } from '@/components/admin-provider'
 import { Navigation } from '@/components/navigation'
+import { isAdminSession } from '@/lib/admin-auth'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -35,15 +36,16 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const isAdmin = await isAdminSession()
   return (
     <html lang="en">
       <body className="font-sans antialiased min-h-screen bg-background text-foreground">
-        <AdminProvider>
+        <AdminProvider initialIsAdmin={isAdmin}>
           <Navigation />
           <main className="pb-8">
             {children}

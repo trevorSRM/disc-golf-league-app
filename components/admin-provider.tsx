@@ -1,71 +1,49 @@
 "use client"
 
-// v2 - No throw on missing context
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { createContext, useContext, useState, type ReactNode } from "react"
+import { useRouter } from "next/navigation"
+import { loginAdmin, logoutAdmin } from "@/app/actions/auth"
 
 interface AdminContextType {
   isAdmin: boolean
-  login: (password: string) => boolean
-  logout: () => void
+  login: (password: string) => Promise<boolean>
+  logout: () => Promise<void>
 }
 
-const defaultContextValue: AdminContextType = {
+const AdminContext = createContext<AdminContextType>({
   isAdmin: false,
-  login: () => false,
-  logout: () => {},
-}
+  login: async () => false,
+  logout: async () => {},
+})
 
-const AdminContext = createContext<AdminContextType>(defaultContextValue)
+export function AdminProvider({
+  children,
+  initialIsAdmin,
+}: {
+  children: ReactNode
+  initialIsAdmin: boolean
+}) {
+  const router = useRouter()
+  const [isAdmin, setIsAdmin] = useState(initialIsAdmin)
 
-const ADMIN_PASSWORD = "bedifferent"
-const STORAGE_KEY = "fcdgl_admin"
-
-export function AdminProvider({ children }: { children: ReactNode }) {
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored === "true") {
-        setIsAdmin(true)
-      }
-    } catch {
-      // localStorage not available
-    }
-  }, [])
-
-  const login = (password: string): boolean => {
-    if (password === ADMIN_PASSWORD) {
+  const login = async (password: string): Promise<boolean> => {
+    const { success } = await loginAdmin(password)
+    if (success) {
       setIsAdmin(true)
-      try {
-        localStorage.setItem(STORAGE_KEY, "true")
-      } catch {
-        // ignore
-      }
-      return true
+      router.refresh()
     }
-    return false
+    return success
   }
 
-  const logout = () => {
+  const logout = async (): Promise<void> => {
+    await logoutAdmin()
     setIsAdmin(false)
-    try {
-      localStorage.removeItem(STORAGE_KEY)
-    } catch {
-      // ignore
-    }
-  }
-
-  const contextValue: AdminContextType = {
-    isAdmin: mounted ? isAdmin : false,
-    login,
-    logout,
+    router.push("/")
+    router.refresh()
   }
 
   return (
-    <AdminContext.Provider value={contextValue}>
+    <AdminContext.Provider value={{ isAdmin, login, logout }}>
       {children}
     </AdminContext.Provider>
   )
