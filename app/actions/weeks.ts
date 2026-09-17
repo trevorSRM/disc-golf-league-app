@@ -1,7 +1,7 @@
 "use server"
 
 import { actionErrorMessage } from "@/lib/action-error"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { requireAdmin } from "@/lib/admin-auth"
 import { revalidatePath } from "next/cache"
 import { Week } from "@/lib/types"
@@ -14,7 +14,7 @@ export async function createWeek(
 ): Promise<{ success: boolean; week?: Week; error?: string }> {
   try {
     await requireAdmin()
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     const { data, error } = await supabase
       .from("weeks")
@@ -45,7 +45,7 @@ export async function getWeekAttendance(
 ): Promise<{ player_id: string; player_name: string; score: number | null; sanctioned: boolean }[]> {
   try {
     await requireAdmin()
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     const { data, error } = await supabase
       .from("attendance")
@@ -72,7 +72,7 @@ export async function updateWeek(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await requireAdmin()
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     const { error } = await supabase
       .from("weeks")
@@ -98,7 +98,7 @@ export async function deleteWeek(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await requireAdmin()
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     // Delete attendance first (cascade should handle this, but being explicit)
     await supabase.from("attendance").delete().eq("week_id", id)
@@ -127,7 +127,7 @@ export async function updateAttendance(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await requireAdmin()
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     // Delete existing attendance for this week
     await supabase.from("attendance").delete().eq("week_id", weekId)
@@ -166,7 +166,7 @@ export async function updateCTPWinner(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await requireAdmin()
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     const { error } = await supabase
       .from("weeks")
@@ -195,7 +195,7 @@ export async function saveDoublesTeams(
 ): Promise<{ success: boolean; error?: string; teams?: { id: string; player1_id: string; player2_id: string }[] }> {
   try {
     await requireAdmin()
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     // Delete existing teams for this week
     await supabase.from("doubles_teams").delete().eq("week_id", weekId)
@@ -236,7 +236,7 @@ export async function updateDoublesTeamScore(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await requireAdmin()
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     const { error } = await supabase
       .from("doubles_teams")
@@ -263,7 +263,7 @@ export async function saveCards(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await requireAdmin()
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     const { error } = await supabase
       .from("weeks")
@@ -293,7 +293,7 @@ export async function submitEvent(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await requireAdmin()
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     const { error } = await supabase
       .from("weeks")
@@ -323,7 +323,7 @@ export async function updateDoublesCTPAndScoringType(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await requireAdmin()
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     const { error } = await supabase
       .from("weeks")

@@ -1,7 +1,7 @@
 "use server"
 
 import { actionErrorMessage } from "@/lib/action-error"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { requireAdmin } from "@/lib/admin-auth"
 import { revalidatePath } from "next/cache"
 import { Player } from "@/lib/types"
@@ -12,7 +12,7 @@ export async function addPlayer(
 ): Promise<{ success: boolean; player?: Player; error?: string }> {
   try {
     await requireAdmin()
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     const { data, error } = await supabase
       .from("players")
@@ -40,7 +40,7 @@ export async function updatePlayer(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await requireAdmin()
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     const { error } = await supabase
       .from("players")
@@ -65,7 +65,7 @@ export async function deletePlayer(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await requireAdmin()
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     const { error } = await supabase
       .from("players")

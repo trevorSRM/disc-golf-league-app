@@ -1,7 +1,7 @@
 "use server"
 
 import { actionErrorMessage } from "@/lib/action-error"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { requireAdmin } from "@/lib/admin-auth"
 import { revalidatePath } from "next/cache"
 import { LeagueFinances } from "@/lib/types"
@@ -11,7 +11,7 @@ export async function updateFinances(
 ): Promise<{ success: boolean; finances?: LeagueFinances; error?: string }> {
   try {
     await requireAdmin()
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     // Get existing finances
     const { data: existing } = await supabase
@@ -67,7 +67,7 @@ export async function deleteAce(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await requireAdmin()
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     const { error } = await supabase
       .from("aces")
@@ -96,7 +96,7 @@ export async function recordAce(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await requireAdmin()
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     // Record the ace
     const { error: aceError } = await supabase

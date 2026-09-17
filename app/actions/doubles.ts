@@ -1,7 +1,7 @@
 "use server"
 
 import { actionErrorMessage } from "@/lib/action-error"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { requireAdmin } from "@/lib/admin-auth"
 import { revalidatePath } from "next/cache"
 import { DoublesEvent } from "@/lib/types"
@@ -12,7 +12,7 @@ export async function createDoublesEvent(
 ): Promise<{ success: boolean; event?: DoublesEvent; error?: string }> {
   try {
     await requireAdmin()
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     const { data, error } = await supabase
       .from("doubles_events")
@@ -41,7 +41,7 @@ export async function deleteDoublesEvent(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await requireAdmin()
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     // Delete teams first
     await supabase.from("doubles_teams").delete().eq("event_id", id)
@@ -70,7 +70,7 @@ export async function saveDoublesTeams(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await requireAdmin()
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     // Delete existing teams for this event
     await supabase.from("doubles_teams").delete().eq("event_id", eventId)
@@ -107,7 +107,7 @@ export async function updateDoublesScores(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await requireAdmin()
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     for (const team of teams) {
       const { error } = await supabase
