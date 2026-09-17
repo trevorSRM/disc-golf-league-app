@@ -25,7 +25,7 @@ import {
 import { Player, Week, DoublesTeamWithPlayers, calculateTeamHandicap } from "@/lib/types"
 import { Plus, Calendar, Users, Trash2, Shuffle, Users2 } from "lucide-react"
 import { createWeek, deleteWeek, updateAttendance, updateCTPWinner, saveDoublesTeams, updateDoublesTeamScore } from "@/app/actions/weeks"
-import { format } from "date-fns"
+import { formatDate, todayDateString } from "@/lib/utils"
 
 interface WeeksManagerProps {
   initialWeeks: Week[]
@@ -57,7 +57,7 @@ export function WeeksManager({ initialWeeks, players }: WeeksManagerProps) {
   const [isRandomizing, setIsRandomizing] = useState(false)
   
   // Get today's date in YYYY-MM-DD format
-  const getTodayDate = () => new Date().toISOString().split('T')[0]
+  const getTodayDate = () => todayDateString()
   
   // Calculate next week number
   const getNextWeekNumber = () => {
@@ -371,7 +371,7 @@ export function WeeksManager({ initialWeeks, players }: WeeksManagerProps) {
                 <div className="flex items-center gap-2">
                   <span className="font-bold">Week {week.week_number}</span>
                   <Badge variant="outline">
-                    {format(new Date(week.date), "MMM d, yyyy")}
+                    {formatDate(week.date, "MMM d, yyyy")}
                   </Badge>
                   {week.is_doubles && (
                     <Badge variant="default" className="bg-primary">

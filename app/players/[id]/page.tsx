@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { User, Trophy, Calendar, TrendingUp, ArrowLeft, Users2, Medal } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { format } from "date-fns"
+import { formatDate } from "@/lib/utils"
 import { calculateHandicap, PAR } from "@/lib/types"
 
 export const dynamic = "force-dynamic"
@@ -311,7 +311,7 @@ export default async function PlayerDetailPage({ params }: Props) {
                         )}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {entry.date && format(new Date(entry.date), "MMM d, yyyy")}
+                        {entry.date && formatDate(entry.date, "MMM d, yyyy")}
                         {entry.courseName && ` • ${entry.courseName}`}
                         {entry.isDoubles && entry.partnerName && (
                           <span className="text-primary"> • w/ {entry.partnerName}</span>

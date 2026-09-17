@@ -42,7 +42,7 @@ import {
   saveCards, submitEvent, updateDoublesTeamScore, updateDoublesCTPAndScoringType 
 } from "@/app/actions/weeks"
 import { addPlayer } from "@/app/actions/players"
-import { format } from "date-fns"
+import { formatDate } from "@/lib/utils"
 
 interface CurrentEventManagerProps {
   currentEvent: WeekWithDetails | null
@@ -1066,7 +1066,7 @@ export function CurrentEventManager({
             <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground mt-2">
               <span className="flex items-center gap-1">
                 <Calendar className="h-4 w-4 shrink-0" />
-                {format(new Date(currentEvent.date), "MMM d, yyyy")}
+                {formatDate(currentEvent.date, "MMM d, yyyy")}
               </span>
               {currentEvent.course_name && (
                 <span className="flex items-center gap-1">

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, ChevronRight, Users2 } from "lucide-react"
 import Link from "next/link"
-import { format } from "date-fns"
+import { formatDate } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
 
@@ -54,7 +54,7 @@ export default async function WeeksPage() {
                         )}
                       </div>
                       <Badge variant="outline">
-                        {format(new Date(week.date), "MMMM d, yyyy")}
+                        {formatDate(week.date, "MMMM d, yyyy")}
                       </Badge>
                       {week.course_name && (
                         <p className="text-sm text-muted-foreground mt-2">

@@ -18,7 +18,7 @@ import {
 import { Player, DoublesEvent, calculateTeamHandicap } from "@/lib/types"
 import { Plus, Target, Shuffle, Users, Trash2, Sparkles } from "lucide-react"
 import { createDoublesEvent, deleteDoublesEvent, saveDoublesTeams, updateDoublesScores } from "@/app/actions/doubles"
-import { format } from "date-fns"
+import { formatDate } from "@/lib/utils"
 
 interface DoublesManagerProps {
   initialEvents: DoublesEvent[]
@@ -296,7 +296,7 @@ export function DoublesManager({ initialEvents, players }: DoublesManagerProps) 
                             onClick={() => saveTeamsToEvent(event.id)}
                             disabled={loading}
                           >
-                            {format(new Date(event.event_date), "MMM d")}
+                            {formatDate(event.event_date, "MMM d")}
                           </Button>
                         ))}
                       </div>
@@ -360,7 +360,7 @@ export function DoublesManager({ initialEvents, players }: DoublesManagerProps) 
               <div>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">
-                    {format(new Date(event.event_date), "MMM d, yyyy")}
+                    {formatDate(event.event_date, "MMM d, yyyy")}
                   </Badge>
                 </div>
                 {event.course_name && (

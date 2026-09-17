@@ -25,7 +25,7 @@ import { Player, LeagueFinances, AceWithPlayer } from "@/lib/types"
 import { CalculatedFinances, PlayerMoneyRanking } from "@/lib/data"
 import { DollarSign, Plus, Disc, TrendingUp, TrendingDown, Users, Calendar, Trash2, Trophy, Flame, Target } from "lucide-react"
 import { updateFinances, recordAce, deleteAce } from "@/app/actions/money"
-import { format } from "date-fns"
+import { formatDate, todayDateString } from "@/lib/utils"
 
 interface MoneyManagerProps {
   initialFinances: LeagueFinances | null
@@ -42,7 +42,7 @@ export function MoneyManager({ initialFinances, calculatedFinances, players, ace
   const [loading, setLoading] = useState(false)
   
   // Get today's date in YYYY-MM-DD format
-  const getTodayDate = () => new Date().toISOString().split('T')[0]
+  const getTodayDate = () => todayDateString()
   
   // Ace form
   const [acePlayerId, setAcePlayerId] = useState("")
@@ -319,7 +319,7 @@ export function MoneyManager({ initialFinances, calculatedFinances, players, ace
                   <div>
                     <div className="font-medium">{ace.player?.name || "Unknown Player"}</div>
                     <div className="text-sm text-muted-foreground">
-                      {format(new Date(ace.date), "MMM d, yyyy")}
+                      {formatDate(ace.date, "MMM d, yyyy")}
                       {ace.course_name && ` • ${ace.course_name}`}
                       {ace.hole_number && ` • Hole ${ace.hole_number}`}
                     </div>

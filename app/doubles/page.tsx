@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Target, ChevronRight, Users } from "lucide-react"
 import Link from "next/link"
-import { format } from "date-fns"
+import { formatDate } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
 
@@ -45,7 +45,7 @@ export default async function DoublesPage() {
                       <div className="flex items-center gap-2 mb-2">
                         <Users className="h-5 w-5 text-primary" />
                         <Badge variant="outline">
-                          {format(new Date(event.event_date), "MMMM d, yyyy")}
+                          {formatDate(event.event_date, "MMMM d, yyyy")}
                         </Badge>
                       </div>
                       {event.course_name && (

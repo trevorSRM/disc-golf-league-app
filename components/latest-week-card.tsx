@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge"
 import { Calendar, Flame, Target, Users2, DollarSign } from "lucide-react"
 import { WeekWithDetails, calculateFinalScore, calculateTeamHandicap, PAR, getSinglesPayouts } from "@/lib/types"
 import Link from "next/link"
-import { format } from "date-fns"
+import { formatDate } from "@/lib/utils"
 
 interface LatestWeekCardProps {
   week: WeekWithDetails | null
@@ -97,7 +97,7 @@ export function LatestWeekCard({ week, handicaps }: LatestWeekCardProps) {
             )}
           </CardTitle>
           <Badge variant="secondary">
-            {format(new Date(week.date), "MMM d, yyyy")}
+            {formatDate(week.date, "MMM d, yyyy")}
           </Badge>
         </div>
         {week.course_name && (

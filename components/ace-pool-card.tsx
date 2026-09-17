@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Disc, Sparkles } from "lucide-react"
 import { AceWithPlayer } from "@/lib/types"
-import { format } from "date-fns"
+import { formatDate } from "@/lib/utils"
 
 interface AcePoolCardProps {
   acePool: number
@@ -35,7 +35,7 @@ export function AcePoolCard({ acePool, latestAce }: AcePoolCardProps) {
             <div className="text-xs text-money uppercase tracking-wide mb-1">Last Ace</div>
             <div className="font-medium">{latestAce.player.name}</div>
             <div className="text-sm text-muted-foreground">
-              {format(new Date(latestAce.date), "MMM d, yyyy")} • ${latestAce.payout}
+              {formatDate(latestAce.date, "MMM d, yyyy")} • ${latestAce.payout}
               {latestAce.course_name && ` • ${latestAce.course_name}`}
               {latestAce.hole_number && ` • Hole ${latestAce.hole_number}`}
             </div>

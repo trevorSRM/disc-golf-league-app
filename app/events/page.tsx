@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, ChevronRight, Users2, CheckCircle } from "lucide-react"
 import Link from "next/link"
-import { format } from "date-fns"
+import { formatDate } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
 
@@ -55,7 +55,7 @@ export default async function EventsPage() {
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge variant="outline" className="text-xs">
-                          {format(new Date(event.date), "MMM d, yyyy")}
+                          {formatDate(event.date, "MMM d, yyyy")}
                         </Badge>
                         <Badge variant="default" className="bg-accent text-xs">
                           <CheckCircle className="h-3 w-3 mr-1" />

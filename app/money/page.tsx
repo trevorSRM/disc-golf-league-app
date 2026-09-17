@@ -2,7 +2,7 @@ import { getCalculatedFinances, getAces, getPlayerMoneyRankings } from "@/lib/da
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { DollarSign, Disc, TrendingUp, TrendingDown, Sparkles, Trophy, Users, Calendar, Flame, Target, Medal } from "lucide-react"
-import { format } from "date-fns"
+import { formatDate } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
 
@@ -250,7 +250,7 @@ export default async function MoneyPage() {
                       <Badge variant="secondary">${ace.payout}</Badge>
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {format(new Date(ace.date), "MMM d, yyyy")}
+                      {formatDate(ace.date, "MMM d, yyyy")}
                       {ace.course_name && ` • ${ace.course_name}`}
                       {ace.hole_number && ` • Hole ${ace.hole_number}`}
                     </div>

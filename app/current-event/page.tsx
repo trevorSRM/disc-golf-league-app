@@ -2,7 +2,7 @@ import { getCurrentEvent, getDoublesTeamsForWeek, getPlayers } from "@/lib/data"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, MapPin, Users2, AlertCircle, PlayCircle } from "lucide-react"
-import { format } from "date-fns"
+import { formatDate } from "@/lib/utils"
 import Link from "next/link"
 
 export const dynamic = "force-dynamic"
@@ -68,7 +68,7 @@ export default async function CurrentEventPage() {
           <div className="flex flex-wrap gap-4 sm:gap-6 text-muted-foreground text-sm sm:text-lg">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
-              <span>{format(new Date(currentEvent.date), "EEE, MMM d, yyyy")}</span>
+              <span>{formatDate(currentEvent.date, "EEE, MMM d, yyyy")}</span>
             </div>
             {currentEvent.course_name && (
               <div className="flex items-center gap-2">

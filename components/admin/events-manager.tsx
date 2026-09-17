@@ -35,7 +35,7 @@ import {
 import { Player, Week } from "@/lib/types"
 import { Plus, Calendar, Trash2, Users2, MapPin, CheckCircle, Clock, Edit2, AlertTriangle } from "lucide-react"
 import { createWeek, deleteWeek, updateAttendance, getWeekAttendance } from "@/app/actions/weeks"
-import { format } from "date-fns"
+import { formatDate, todayDateString } from "@/lib/utils"
 
 interface EventsManagerProps {
   initialEvents: Week[]
@@ -59,7 +59,7 @@ export function EventsManager({ initialEvents, players: initialPlayers, hasCurre
   const [eventToDelete, setEventToDelete] = useState<Week | null>(null)
   
   // Get today's date in YYYY-MM-DD format
-  const getTodayDate = () => new Date().toISOString().split('T')[0]
+  const getTodayDate = () => todayDateString()
   
   // Calculate next event number
   const getNextEventNumber = () => {
@@ -484,7 +484,7 @@ export function EventsManager({ initialEvents, players: initialPlayers, hasCurre
                       <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground mt-1">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3 shrink-0" />
-                          {format(new Date(event.date), "MMM d, yyyy")}
+                          {formatDate(event.date, "MMM d, yyyy")}
                         </span>
                         {event.course_name && (
                           <span className="flex items-center gap-1">

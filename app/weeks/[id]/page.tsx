@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Calendar, Flame, Target, Trophy, ArrowLeft, Medal, Users2 } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { format } from "date-fns"
+import { formatDate } from "@/lib/utils"
 import { PAR, calculateFinalScore } from "@/lib/types"
 
 export const dynamic = "force-dynamic"
@@ -107,7 +107,7 @@ export default async function WeekDetailPage({ params }: Props) {
         </div>
         <div className="flex items-center gap-3">
           <Badge variant="outline" className="text-base">
-            {format(new Date(week.date), "MMMM d, yyyy")}
+            {formatDate(week.date, "MMMM d, yyyy")}
           </Badge>
           {week.course_name && (
             <span className="text-muted-foreground">{week.course_name}</span>

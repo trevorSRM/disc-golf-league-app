@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Calendar, Flame, Target, Trophy, ArrowLeft, Medal, Users2 } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { format } from "date-fns"
+import { formatDate } from "@/lib/utils"
 import { PAR, calculateFinalScore, getSinglesPayouts } from "@/lib/types"
 
 export const dynamic = "force-dynamic"
@@ -128,7 +128,7 @@ export default async function EventDetailPage({ params }: Props) {
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <Badge variant="outline" className="text-xs sm:text-base">
-            {format(new Date(event.date), "MMM d, yyyy")}
+            {formatDate(event.date, "MMM d, yyyy")}
           </Badge>
           {event.course_name && (
             <span className="text-sm sm:text-base text-muted-foreground truncate">{event.course_name}</span>

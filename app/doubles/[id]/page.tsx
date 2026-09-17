@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Target, Users, Trophy, ArrowLeft, Medal } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { format } from "date-fns"
+import { formatDate } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
 
@@ -67,7 +67,7 @@ export default async function DoublesDetailPage({ params }: Props) {
         </div>
         <div className="flex items-center gap-3">
           <Badge variant="outline" className="text-base">
-            {format(new Date(event.event_date), "MMMM d, yyyy")}
+            {formatDate(event.event_date, "MMMM d, yyyy")}
           </Badge>
           {event.course_name && (
             <span className="text-muted-foreground">{event.course_name}</span>
