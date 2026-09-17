@@ -1,5 +1,6 @@
 "use server"
 
+import { actionErrorMessage } from "@/lib/action-error"
 import { createClient } from "@/lib/supabase/server"
 import { requireAdmin } from "@/lib/admin-auth"
 import { revalidatePath } from "next/cache"
@@ -31,7 +32,7 @@ export async function createDoublesEvent(
     return { success: true, event: data }
   } catch (error) {
     console.error("Error creating doubles event:", error)
-    return { success: false, error: "Failed to create event" }
+    return { success: false, error: actionErrorMessage(error, "Failed to create event") }
   }
 }
 
@@ -59,7 +60,7 @@ export async function deleteDoublesEvent(
     return { success: true }
   } catch (error) {
     console.error("Error deleting doubles event:", error)
-    return { success: false, error: "Failed to delete event" }
+    return { success: false, error: actionErrorMessage(error, "Failed to delete event") }
   }
 }
 
@@ -97,7 +98,7 @@ export async function saveDoublesTeams(
     return { success: true }
   } catch (error) {
     console.error("Error saving doubles teams:", error)
-    return { success: false, error: "Failed to save teams" }
+    return { success: false, error: actionErrorMessage(error, "Failed to save teams") }
   }
 }
 
@@ -124,6 +125,6 @@ export async function updateDoublesScores(
     return { success: true }
   } catch (error) {
     console.error("Error updating doubles scores:", error)
-    return { success: false, error: "Failed to update scores" }
+    return { success: false, error: actionErrorMessage(error, "Failed to update scores") }
   }
 }

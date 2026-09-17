@@ -1,5 +1,6 @@
 "use server"
 
+import { actionErrorMessage } from "@/lib/action-error"
 import { createClient } from "@/lib/supabase/server"
 import { requireAdmin } from "@/lib/admin-auth"
 import { revalidatePath } from "next/cache"
@@ -57,7 +58,7 @@ export async function updateFinances(
     }
   } catch (error) {
     console.error("Error updating finances:", error)
-    return { success: false, error: "Failed to update finances" }
+    return { success: false, error: actionErrorMessage(error, "Failed to update finances") }
   }
 }
 
@@ -82,7 +83,7 @@ export async function deleteAce(
     return { success: true }
   } catch (error) {
     console.error("Error deleting ace:", error)
-    return { success: false, error: "Failed to delete ace" }
+    return { success: false, error: actionErrorMessage(error, "Failed to delete ace") }
   }
 }
 
@@ -135,6 +136,6 @@ export async function recordAce(
     return { success: true }
   } catch (error) {
     console.error("Error recording ace:", error)
-    return { success: false, error: "Failed to record ace" }
+    return { success: false, error: actionErrorMessage(error, "Failed to record ace") }
   }
 }

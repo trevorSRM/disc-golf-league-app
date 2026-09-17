@@ -1,5 +1,6 @@
 "use server"
 
+import { actionErrorMessage } from "@/lib/action-error"
 import { createClient } from "@/lib/supabase/server"
 import { requireAdmin } from "@/lib/admin-auth"
 import { revalidatePath } from "next/cache"
@@ -35,7 +36,7 @@ export async function createWeek(
     return { success: true, week: data }
   } catch (error) {
     console.error("Error creating week:", error)
-    return { success: false, error: "Failed to create week" }
+    return { success: false, error: actionErrorMessage(error, "Failed to create week") }
   }
 }
 
@@ -88,7 +89,7 @@ export async function updateWeek(
     return { success: true }
   } catch (error) {
     console.error("Error updating week:", error)
-    return { success: false, error: "Failed to update week" }
+    return { success: false, error: actionErrorMessage(error, "Failed to update week") }
   }
 }
 
@@ -116,7 +117,7 @@ export async function deleteWeek(
     return { success: true }
   } catch (error) {
     console.error("Error deleting week:", error)
-    return { success: false, error: "Failed to delete week" }
+    return { success: false, error: actionErrorMessage(error, "Failed to delete week") }
   }
 }
 
@@ -154,7 +155,7 @@ export async function updateAttendance(
     return { success: true }
   } catch (error) {
     console.error("Error updating attendance:", error)
-    return { success: false, error: "Failed to update attendance" }
+    return { success: false, error: actionErrorMessage(error, "Failed to update attendance") }
   }
 }
 
@@ -184,7 +185,7 @@ export async function updateCTPWinner(
     return { success: true }
   } catch (error) {
     console.error("Error updating CTP winner:", error)
-    return { success: false, error: "Failed to update CTP winner" }
+    return { success: false, error: actionErrorMessage(error, "Failed to update CTP winner") }
   }
 }
 
@@ -225,7 +226,7 @@ export async function saveDoublesTeams(
     return { success: true, teams: savedTeams }
   } catch (error) {
     console.error("Error saving doubles teams:", error)
-    return { success: false, error: "Failed to save doubles teams" }
+    return { success: false, error: actionErrorMessage(error, "Failed to save doubles teams") }
   }
 }
 
@@ -251,7 +252,7 @@ export async function updateDoublesTeamScore(
     return { success: true }
   } catch (error) {
     console.error("Error updating team score:", error)
-    return { success: false, error: "Failed to update team score" }
+    return { success: false, error: actionErrorMessage(error, "Failed to update team score") }
   }
 }
 
@@ -282,7 +283,7 @@ export async function saveCards(
     return { success: true }
   } catch (error) {
     console.error("Error saving cards:", error)
-    return { success: false, error: "Failed to save cards" }
+    return { success: false, error: actionErrorMessage(error, "Failed to save cards") }
   }
 }
 
@@ -309,7 +310,7 @@ export async function submitEvent(
     return { success: true }
   } catch (error) {
     console.error("Error submitting event:", error)
-    return { success: false, error: "Failed to submit event" }
+    return { success: false, error: actionErrorMessage(error, "Failed to submit event") }
   }
 }
 
@@ -343,6 +344,6 @@ export async function updateDoublesCTPAndScoringType(
     return { success: true }
   } catch (error) {
     console.error("Error updating doubles CTP and scoring type:", error)
-    return { success: false, error: "Failed to update doubles settings" }
+    return { success: false, error: actionErrorMessage(error, "Failed to update doubles settings") }
   }
 }

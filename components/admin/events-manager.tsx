@@ -53,6 +53,7 @@ export function EventsManager({ initialEvents, players: initialPlayers, hasCurre
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState<Week | null>(null)
   const [loading, setLoading] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
   
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [eventToDelete, setEventToDelete] = useState<Week | null>(null)
@@ -85,6 +86,7 @@ export function EventsManager({ initialEvents, players: initialPlayers, hasCurre
     if (!newEventNumber || !newEventDate) return
     
     setLoading(true)
+    setCreateError(null)
     try {
       const result = await createWeek(
         parseInt(newEventNumber),
@@ -107,6 +109,8 @@ export function EventsManager({ initialEvents, players: initialPlayers, hasCurre
         router.refresh()
         // Players are now checked in on the Current Event tab
         onEventCreated?.()
+      } else {
+        setCreateError(result.error ?? "Failed to create event")
       }
     } finally {
       setLoading(false)
@@ -291,6 +295,13 @@ export function EventsManager({ initialEvents, players: initialPlayers, hasCurre
               <p className="text-sm text-muted-foreground">
                 After creating the event, you&apos;ll check players in on the Current Event tab.
               </p>
+              
+              {createError && (
+                <p className="text-sm text-destructive flex items-center gap-1">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  {createError}
+                </p>
+              )}
               
               <Button 
                 onClick={handleCreateEvent} 

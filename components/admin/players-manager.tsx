@@ -34,12 +34,14 @@ export function PlayersManager({ initialPlayers }: PlayersManagerProps) {
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [addError, setAddError] = useState<string | null>(null)
 
   const handleAddPlayer = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newPlayerName.trim()) return
     
     setLoading(true)
+    setAddError(null)
     try {
       const result = await addPlayer(newPlayerName.trim(), newPlayerIsMember)
       if (result.success && result.player) {
@@ -48,6 +50,8 @@ export function PlayersManager({ initialPlayers }: PlayersManagerProps) {
         setNewPlayerIsMember(false)
         setAddDialogOpen(false)
         router.refresh()
+      } else {
+        setAddError(result.error ?? "Failed to add player")
       }
     } finally {
       setLoading(false)
@@ -141,6 +145,9 @@ export function PlayersManager({ initialPlayers }: PlayersManagerProps) {
                   onCheckedChange={setNewPlayerIsMember}
                 />
               </div>
+              {addError && (
+                <p className="text-sm text-destructive">{addError}</p>
+              )}
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={() => setAddDialogOpen(false)}>
                   Cancel

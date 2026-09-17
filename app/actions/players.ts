@@ -1,5 +1,6 @@
 "use server"
 
+import { actionErrorMessage } from "@/lib/action-error"
 import { createClient } from "@/lib/supabase/server"
 import { requireAdmin } from "@/lib/admin-auth"
 import { revalidatePath } from "next/cache"
@@ -28,7 +29,7 @@ export async function addPlayer(
     return { success: true, player: data }
   } catch (error) {
     console.error("Error adding player:", error)
-    return { success: false, error: "Failed to add player" }
+    return { success: false, error: actionErrorMessage(error, "Failed to add player") }
   }
 }
 
@@ -55,7 +56,7 @@ export async function updatePlayer(
     return { success: true }
   } catch (error) {
     console.error("Error updating player:", error)
-    return { success: false, error: "Failed to update player" }
+    return { success: false, error: actionErrorMessage(error, "Failed to update player") }
   }
 }
 
@@ -80,6 +81,6 @@ export async function deletePlayer(
     return { success: true }
   } catch (error) {
     console.error("Error deleting player:", error)
-    return { success: false, error: "Failed to delete player" }
+    return { success: false, error: actionErrorMessage(error, "Failed to delete player") }
   }
 }
