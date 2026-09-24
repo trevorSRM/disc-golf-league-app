@@ -73,9 +73,9 @@ function isDoublesIndex(index: number): boolean {
 export function getSchedule(): ScheduleEntry[] {
   const entries: ScheduleEntry[] = []
 
-  // Start at index 1: the Jul 23 anchor night is removed from the schedule,
-  // but the anchor itself stays so the rotation is unchanged.
-  for (let i = 1; i <= LAST_INDEX; i++) {
+  // Start at index 2: the Jul 23 and Jul 30 nights are removed from the
+  // schedule, but the anchor itself stays so the rotation is unchanged.
+  for (let i = 2; i <= LAST_INDEX; i++) {
     const date = addDays(ANCHOR, i * 7)
     const location = locationForIndex(i)
     const doubles = isDoublesIndex(i)
