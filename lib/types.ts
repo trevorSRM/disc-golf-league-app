@@ -113,6 +113,28 @@ export interface AceWithPlayer extends Ace {
   player: Player
 }
 
+// Season settings
+//
+// 2026 restart: the database was wiped late in the season, so the rest of 2026
+// runs on temporary rules. FOR NEXT SEASON: set MIN_HANDICAP_ROUNDS back to 3,
+// COUNT_MEMBERSHIP_FEES back to true, and MONEY_RESTART to null.
+
+/** Rounds a player needs before they get their own handicap. Normally 3. */
+export const MIN_HANDICAP_ROUNDS = 1
+
+/** Count $25 per member in money collected. Off for 2026: fees paid before the
+ *  wipe are already in the cash count below. */
+export const COUNT_MEMBERSHIP_FEES = false
+
+/** Money restart point. Weeks up to and including `afterWeek` are already
+ *  accounted for in `startingCash` (the physical cash count), so they are left
+ *  out of the money totals. After that, each player's first round since the
+ *  wipe is free. */
+export const MONEY_RESTART: { afterWeek: number; startingCash: number } | null = {
+  afterWeek: 21,
+  startingCash: 1076,
+}
+
 // Calculation helpers
 export const PAR = 54
 
@@ -122,13 +144,13 @@ export const PAR = 54
 //
 // Rules:
 // - Use only the most recent 10 rounds
-// - Require minimum 3 rounds to establish a handicap
+// - Require MIN_HANDICAP_ROUNDS rounds to establish a handicap
 // - Scale drops based on rounds played:
-//   - 3 rounds: drop 0
+//   - 1-3 rounds: drop 0
 //   - 4-5 rounds: drop 1
 //   - 6+ rounds: drop 2
 export function calculateHandicap(scores: number[]): number {
-  if (scores.length < 3) return 0 // Need at least 3 rounds
+  if (scores.length < MIN_HANDICAP_ROUNDS) return 0
   
   // Take only the most recent 10 rounds (scores should already be ordered newest first)
   const recentScores = scores.slice(0, 10)

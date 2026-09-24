@@ -7,7 +7,7 @@ import { User, Trophy, Calendar, TrendingUp, ArrowLeft, Users2, Medal } from "lu
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { formatDate } from "@/lib/utils"
-import { calculateHandicap, PAR } from "@/lib/types"
+import { calculateHandicap, PAR, MIN_HANDICAP_ROUNDS } from "@/lib/types"
 
 export const dynamic = "force-dynamic"
 
@@ -159,9 +159,9 @@ export default async function PlayerDetailPage({ params }: Props) {
   // Mirror calculateHandicap's selection so we can visually mark which singles weeks
   // count toward the handicap and which are the dropped (worst) rounds.
   // - The most recent 10 singles rounds form the "handicap window".
-  // - Within that window we drop the worst (highest) scores: 0 for 3 rounds,
+  // - Within that window we drop the worst (highest) scores: 0 for 1-3 rounds,
   //   1 for 4-5 rounds, 2 for 6+ rounds.
-  const handicapEstablished = scores.length >= 3
+  const handicapEstablished = scores.length >= MIN_HANDICAP_ROUNDS
   const windowEntries = singlesAttendance.slice(0, 10)
   const numRounds = windowEntries.length
   let scoresToDrop = 0

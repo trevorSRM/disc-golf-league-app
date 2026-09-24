@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { DollarSign, Disc, TrendingUp, TrendingDown, Sparkles, Trophy, Users, Calendar, Flame, Target, Medal } from "lucide-react"
 import { formatDate } from "@/lib/utils"
+import { COUNT_MEMBERSHIP_FEES, MONEY_RESTART } from "@/lib/types"
 
 export const dynamic = "force-dynamic"
 
@@ -62,13 +63,24 @@ export default async function MoneyPage() {
               ${finances.total_collected.toFixed(0)}
             </div>
             <div className="mt-4 space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  <Users className="h-4 w-4 inline mr-1" />
-                  {finances.breakdown.member_count} members × $25
-                </span>
-                <span className="font-medium">${finances.breakdown.membership_fees}</span>
-              </div>
+              {MONEY_RESTART && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    <DollarSign className="h-4 w-4 inline mr-1" />
+                    Cash count after Week {MONEY_RESTART.afterWeek}
+                  </span>
+                  <span className="font-medium">${finances.breakdown.starting_cash}</span>
+                </div>
+              )}
+              {COUNT_MEMBERSHIP_FEES && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    <Users className="h-4 w-4 inline mr-1" />
+                    {finances.breakdown.member_count} members × $25
+                  </span>
+                  <span className="font-medium">${finances.breakdown.membership_fees}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-muted-foreground">
                   <Calendar className="h-4 w-4 inline mr-1" />
@@ -76,6 +88,15 @@ export default async function MoneyPage() {
                 </span>
                 <span className="font-medium">${finances.breakdown.weekly_fees}</span>
               </div>
+              {finances.breakdown.free_rounds > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    <Calendar className="h-4 w-4 inline mr-1" />
+                    {finances.breakdown.free_rounds} free first rounds
+                  </span>
+                  <span className="font-medium">$0</span>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

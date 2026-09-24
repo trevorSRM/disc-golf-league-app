@@ -101,7 +101,7 @@ export function CurrentEventManager({
   }, [currentEvent?.attendance])
   
   // Calculate effective handicaps with non-member rule applied
-  // Non-members (or players with < 3 rounds) get the best member's handicap
+  // Non-members (or players without enough rounds) get the best member's handicap
   const effectiveHandicaps = useMemo(() => {
     const effective = new Map<string, number>()
     
@@ -111,14 +111,14 @@ export function CurrentEventManager({
     for (const playerId of attendingPlayerIds) {
       const player = players.find(p => p.id === playerId)
       const rawHandicap = handicaps.get(playerId) || 0
-      // A player has a valid handicap if it's not 0 (0 means < 3 rounds)
+      // A player has a valid handicap if it's not 0 (0 means not enough rounds)
       // We check is_member and if they have a real handicap
       if (player?.is_member && rawHandicap !== 0 && rawHandicap > bestMemberHandicap) {
         bestMemberHandicap = rawHandicap
       }
     }
     
-    // Also check members with 0 handicap who have 3+ rounds (handicap could legitimately be 0)
+    // Also check members with 0 handicap who have enough rounds (handicap could legitimately be 0)
     // For simplicity, if best is still 0, check if any member is attending
     if (bestMemberHandicap === 0) {
       for (const playerId of attendingPlayerIds) {

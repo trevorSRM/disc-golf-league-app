@@ -14,7 +14,10 @@ import {
   AceWithPlayer,
   calculateHandicap,
   PAR,
-  getSinglesPayouts
+  getSinglesPayouts,
+  MIN_HANDICAP_ROUNDS,
+  COUNT_MEMBERSHIP_FEES,
+  MONEY_RESTART
 } from "@/lib/types"
 
 // Players
@@ -157,7 +160,7 @@ export async function getPlayersWithStats(): Promise<PlayerWithStats[]> {
           .filter(att => att.player_id === a.player_id && att.score !== null && priorWeekIds.includes(att.week_id))
           .map(att => att.score as number)
         rawHandicaps.set(a.player_id, calculateHandicap(priorScores))
-        hasEnoughRounds.set(a.player_id, priorScores.length >= 3)
+        hasEnoughRounds.set(a.player_id, priorScores.length >= MIN_HANDICAP_ROUNDS)
       }
       
       // Find best member handicap among attending players who have enough rounds
@@ -326,7 +329,7 @@ export async function getPlayerWinWeekIds(playerId: string): Promise<Set<string>
         .filter(att => att.player_id === a.player_id && att.score !== null && priorWeekIds.includes(att.week_id))
         .map(att => att.score as number)
       rawHandicaps.set(a.player_id, calculateHandicap(priorScores))
-      hasEnoughRounds.set(a.player_id, priorScores.length >= 3)
+      hasEnoughRounds.set(a.player_id, priorScores.length >= MIN_HANDICAP_ROUNDS)
     }
 
     let bestMemberHandicap = 0
@@ -597,6 +600,10 @@ export interface CalculatedFinances {
     total_attendance: number
     weeks_with_scores: number
     weeks_with_ctp: number
+    /** Cash counted at the money restart (0 when there is no restart). */
+    starting_cash: number
+    /** First rounds since the restart, not charged. */
+    free_rounds: number
   }
 }
 
@@ -610,19 +617,49 @@ export async function getCalculatedFinances(): Promise<CalculatedFinances> {
     .eq("is_member", true)
   const memberCount = members?.length || 0
   
-  // Get total attendance records (each = $5)
-  const { data: attendance } = await supabase
+  // Get all attendance records (each = $5)
+  const { data: allAttendance } = await supabase
     .from("attendance")
-    .select("id, score, week_id")
-  const totalAttendance = attendance?.length || 0
-  
+    .select("id, score, week_id, player_id")
+
   // Get all submitted weeks to determine singles vs doubles
   // week_number is required so the payout-tier cutoff (Week 9+) is applied correctly.
-  const { data: allWeeks } = await supabase
+  const { data: allSubmittedWeeks } = await supabase
     .from("weeks")
     .select("id, week_number, is_doubles, ctp_winner_id, doubles_ctp_team_id")
     .eq("is_submitted", true)
-  
+
+  // Money restart: weeks up to the restart are already in the cash count, so
+  // leave them out of the money totals entirely.
+  const allWeeks = MONEY_RESTART
+    ? allSubmittedWeeks?.filter(w => w.week_number > MONEY_RESTART.afterWeek)
+    : allSubmittedWeeks
+  const countedWeekIds = new Set((allWeeks || []).map(w => w.id))
+  const attendance = MONEY_RESTART
+    ? allAttendance?.filter(a => countedWeekIds.has(a.week_id))
+    : allAttendance
+
+  // Money restart: each player's first round since the wipe is free. A round is
+  // free when the player has no attendance in any earlier week.
+  let freeRounds = 0
+  if (MONEY_RESTART) {
+    const { data: weekNumbers } = await supabase
+      .from("weeks")
+      .select("id, week_number")
+    const weekNumberById = new Map((weekNumbers || []).map(w => [w.id, w.week_number]))
+    const firstWeekByPlayer = new Map<string, number>()
+    for (const a of allAttendance || []) {
+      const wn = weekNumberById.get(a.week_id)
+      if (wn === undefined) continue
+      const first = firstWeekByPlayer.get(a.player_id)
+      if (first === undefined || wn < first) firstWeekByPlayer.set(a.player_id, wn)
+    }
+    for (const a of attendance || []) {
+      if (weekNumberById.get(a.week_id) === firstWeekByPlayer.get(a.player_id)) freeRounds++
+    }
+  }
+  const totalAttendance = (attendance?.length || 0) - freeRounds
+
   // Count singles weeks with scores (hot round = $20)
   const singlesWeeksWithScores = new Set<string>()
   for (const a of attendance || []) {
@@ -686,14 +723,15 @@ export async function getCalculatedFinances(): Promise<CalculatedFinances> {
   const acePool = finances?.ace_pool || 0
   
   // Calculate totals
-  const membershipFees = memberCount * 25
+  const membershipFees = COUNT_MEMBERSHIP_FEES ? memberCount * 25 : 0
   const weeklyFees = totalAttendance * 5
+  const startingCash = MONEY_RESTART?.startingCash || 0
   // Singles hot round is tiered ($20 base, $25 on 20+ weeks); Doubles hot round = $40 (both team members get $20)
   const hotRoundPayouts = singlesHotRoundPayouts + (doublesWeeksWithScores.size * 40)
   // Singles CTP = $20, Doubles CTP = $40 (both team members get $20)
   const ctpPayouts = (singlesCTPCount * 20) + (doublesCTPCount * 40)
   
-  const totalCollected = membershipFees + weeklyFees
+  const totalCollected = startingCash + membershipFees + weeklyFees
   const totalPaidOut = hotRoundPayouts + secondPlacePayouts + lowRawPayouts + ctpPayouts + acePayouts
   
   const totalWeeksWithScores = singlesWeeksWithScores.size + doublesWeeksWithScores.size
@@ -714,7 +752,9 @@ export async function getCalculatedFinances(): Promise<CalculatedFinances> {
       member_count: memberCount,
       total_attendance: totalAttendance,
       weeks_with_scores: totalWeeksWithScores,
-      weeks_with_ctp: totalCTPCount
+      weeks_with_ctp: totalCTPCount,
+      starting_cash: startingCash,
+      free_rounds: freeRounds
     }
   }
 }
@@ -872,9 +912,9 @@ export async function getPlayerMoneyRankings(): Promise<PlayerMoneyRanking[]> {
         .filter(att => att.player_id === a.player_id && att.score !== null && priorWeekIds.includes(att.week_id))
         .map(att => att.score as number)
       rawHandicaps.set(a.player_id, calculateHandicap(priorScores))
-      hasEnoughRounds.set(a.player_id, priorScores.length >= 3)
+      hasEnoughRounds.set(a.player_id, priorScores.length >= MIN_HANDICAP_ROUNDS)
     }
-    
+
     // Find best member handicap among attending players who have enough rounds
     let bestMemberHandicap = 0
     for (const a of weekAttendance) {
@@ -887,12 +927,12 @@ export async function getPlayerMoneyRankings(): Promise<PlayerMoneyRanking[]> {
     }
     
     // Calculate final scores with member rule applied
-    // Players without 3 rounds OR non-members get the best member handicap (hardest)
+    // Players without enough rounds OR non-members get the best member handicap (hardest)
     const finalScores = weekAttendance.map(a => {
       const isMember = membershipMap.get(a.player_id) || false
       const rawHandicap = rawHandicaps.get(a.player_id) || 0
       const hasRounds = hasEnoughRounds.get(a.player_id) || false
-      // Use best member handicap if: not a member OR doesn't have 3+ rounds
+      // Use best member handicap if: not a member OR doesn't have enough rounds
       const playerHandicap = (isMember && hasRounds) ? rawHandicap : bestMemberHandicap
       const rawScore = a.score as number
       const finalScore = (rawScore - PAR) + playerHandicap
@@ -1098,15 +1138,15 @@ export async function getHandicapsForEvent(eventWeekNumber: number, attendingPla
     playerScores.set(record.player_id, scores)
   }
   
-// Calculate raw handicaps for all players and track if they have 3+ rounds
+// Calculate raw handicaps for all players and track if they have enough rounds
   const rawHandicaps = new Map<string, number>()
   const hasEnoughRounds = new Map<string, boolean>()
   for (const [playerId, scores] of playerScores) {
     rawHandicaps.set(playerId, calculateHandicap(scores))
-    hasEnoughRounds.set(playerId, scores.length >= 3)
+    hasEnoughRounds.set(playerId, scores.length >= MIN_HANDICAP_ROUNDS)
   }
-  
-  // Find the best (highest) member handicap among attending players WITH 3+ rounds
+
+  // Find the best (highest) member handicap among attending players WITH enough rounds
   // Higher handicap = better player (e.g., +10 is better than +5)
   let bestMemberHandicap = 0
   const attendingSet = attendingPlayerIds ? new Set(attendingPlayerIds) : null
@@ -1122,8 +1162,8 @@ export async function getHandicapsForEvent(eventWeekNumber: number, attendingPla
   }
   
   // Apply the rule: 
-  // - Members with 3+ rounds get their own handicap
-  // - Non-members OR anyone with < 3 rounds gets best member's handicap
+  // - Members with enough rounds get their own handicap
+  // - Non-members OR anyone without enough rounds gets best member's handicap
   const handicaps = new Map<string, number>()
   for (const [playerId, handicap] of rawHandicaps) {
     const isMember = membershipMap.get(playerId) || false

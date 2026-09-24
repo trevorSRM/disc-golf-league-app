@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Player, LeagueFinances, AceWithPlayer } from "@/lib/types"
+import { Player, LeagueFinances, AceWithPlayer, COUNT_MEMBERSHIP_FEES, MONEY_RESTART } from "@/lib/types"
 import { CalculatedFinances, PlayerMoneyRanking } from "@/lib/data"
 import { DollarSign, Plus, Disc, TrendingUp, TrendingDown, Users, Calendar, Trash2, Trophy, Flame, Target } from "lucide-react"
 import { updateFinances, recordAce, deleteAce } from "@/app/actions/money"
@@ -158,13 +158,24 @@ export function MoneyManager({ initialFinances, calculatedFinances, players, ace
                 Money In Breakdown
               </h4>
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    <Users className="h-4 w-4 inline mr-1" />
-                    {calculatedFinances.breakdown.member_count} members × $25
-                  </span>
-                  <span className="font-medium">${calculatedFinances.breakdown.membership_fees}</span>
-                </div>
+                {MONEY_RESTART && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      <DollarSign className="h-4 w-4 inline mr-1" />
+                      Cash count after Week {MONEY_RESTART.afterWeek}
+                    </span>
+                    <span className="font-medium">${calculatedFinances.breakdown.starting_cash}</span>
+                  </div>
+                )}
+                {COUNT_MEMBERSHIP_FEES && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      <Users className="h-4 w-4 inline mr-1" />
+                      {calculatedFinances.breakdown.member_count} members × $25
+                    </span>
+                    <span className="font-medium">${calculatedFinances.breakdown.membership_fees}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">
                     <Calendar className="h-4 w-4 inline mr-1" />
@@ -172,6 +183,15 @@ export function MoneyManager({ initialFinances, calculatedFinances, players, ace
                   </span>
                   <span className="font-medium">${calculatedFinances.breakdown.weekly_fees}</span>
                 </div>
+                {calculatedFinances.breakdown.free_rounds > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      <Calendar className="h-4 w-4 inline mr-1" />
+                      {calculatedFinances.breakdown.free_rounds} free first rounds
+                    </span>
+                    <span className="font-medium">$0</span>
+                  </div>
+                )}
               </div>
             </div>
             <div className="p-4 rounded-lg bg-muted/30 border border-border">
