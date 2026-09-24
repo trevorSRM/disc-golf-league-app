@@ -60,6 +60,29 @@ export async function updatePlayer(
   }
 }
 
+export async function makeAllPlayersMembers(): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireAdmin()
+    const supabase = createAdminClient()
+
+    const { error } = await supabase
+      .from("players")
+      .update({ is_member: true })
+      .eq("is_member", false)
+
+    if (error) throw error
+
+    revalidatePath("/")
+    revalidatePath("/admin")
+    revalidatePath("/players")
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error making all players members:", error)
+    return { success: false, error: actionErrorMessage(error, "Failed to update players") }
+  }
+}
+
 export async function deletePlayer(
   id: string
 ): Promise<{ success: boolean; error?: string }> {

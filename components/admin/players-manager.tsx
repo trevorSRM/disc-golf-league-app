@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog"
 import { Player } from "@/lib/types"
 import { Plus, Edit2, Trash2, UserPlus, Crown } from "lucide-react"
-import { addPlayer, updatePlayer, deletePlayer } from "@/app/actions/players"
+import { addPlayer, updatePlayer, deletePlayer, makeAllPlayersMembers } from "@/app/actions/players"
 
 interface PlayersManagerProps {
   initialPlayers: Player[]
@@ -92,6 +92,25 @@ export function PlayersManager({ initialPlayers }: PlayersManagerProps) {
       if (result.success) {
         setPlayers(prev => prev.filter(p => p.id !== player.id))
         router.refresh()
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleMakeAllMembers = async () => {
+    if (!confirm(`Make all ${visitors.length} visitors members?`)) {
+      return
+    }
+
+    setLoading(true)
+    try {
+      const result = await makeAllPlayersMembers()
+      if (result.success) {
+        setPlayers(prev => prev.map(p => ({ ...p, is_member: true })))
+        router.refresh()
+      } else {
+        alert(result.error ?? "Failed to update players")
       }
     } finally {
       setLoading(false)
@@ -206,9 +225,22 @@ export function PlayersManager({ initialPlayers }: PlayersManagerProps) {
 
         {/* Visitors Section */}
         <div>
-          <h3 className="text-sm font-medium text-muted-foreground mb-3">
-            Visitors ({visitors.length})
-          </h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-muted-foreground">
+              Visitors ({visitors.length})
+            </h3>
+            {visitors.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleMakeAllMembers}
+                disabled={loading}
+              >
+                <Crown className="h-4 w-4 mr-2" />
+                Make All Members
+              </Button>
+            )}
+          </div>
           <div className="space-y-2">
             {visitors.map(player => (
               <div
