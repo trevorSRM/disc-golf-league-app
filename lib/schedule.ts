@@ -42,6 +42,19 @@ const LAST_INDEX = 15
 const DOUBLES_TOURNAMENT = new Date(2026, 10, 5) // Thu, Nov 5, 2026
 const SEASON_FINALE = new Date(2026, 10, 7) // Sat, Nov 7, 2026
 
+// One-off changes to the rotation, keyed by "YYYY-MM-DD". Only the listed
+// nights change; the rest of the rotation is unaffected.
+const OVERRIDES: Record<string, { location: ScheduleLocation; doubles: boolean }> = {
+  "2026-10-08": { location: "Akron", doubles: false },
+  "2026-10-15": { location: "Akron", doubles: true },
+}
+
+function dateKey(d: Date): string {
+  const mm = String(d.getMonth() + 1).padStart(2, "0")
+  const dd = String(d.getDate()).padStart(2, "0")
+  return `${d.getFullYear()}-${mm}-${dd}`
+}
+
 function addDays(base: Date, days: number): Date {
   const d = new Date(base)
   d.setDate(d.getDate() + days)
@@ -77,8 +90,9 @@ export function getSchedule(): ScheduleEntry[] {
   // schedule, but the anchor itself stays so the rotation is unchanged.
   for (let i = 2; i <= LAST_INDEX; i++) {
     const date = addDays(ANCHOR, i * 7)
-    const location = locationForIndex(i)
-    const doubles = isDoublesIndex(i)
+    const override = OVERRIDES[dateKey(date)]
+    const location = override ? override.location : locationForIndex(i)
+    const doubles = override ? override.doubles : isDoublesIndex(i)
     const isDoublesTournament = isSameDay(date, DOUBLES_TOURNAMENT)
 
     entries.push({
