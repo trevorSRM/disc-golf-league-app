@@ -795,6 +795,9 @@ export function CurrentEventManager({
             team_handicap: t.team_handicap
           }))
         
+        // Temporary team ID -> real team ID, so the CTP and playoff picks
+        // (made against temporary IDs) point at the saved teams.
+        const savedIdFor = new Map<string, string>()
         if (teamsToSave.length > 0) {
           // Save teams to database and get back the real IDs
           const result = await saveDoublesTeams(currentEvent.id, teamsToSave)
@@ -802,10 +805,11 @@ export function CurrentEventManager({
             // Now update scores using the real team IDs
             for (const savedTeam of result.teams) {
               // Find the matching reconstructed team by player IDs
-              const originalTeam = doublesTeams.find(t => 
+              const originalTeam = doublesTeams.find(t =>
                 t.player1_id === savedTeam.player1_id && t.player2_id === savedTeam.player2_id
               )
               if (originalTeam) {
+                savedIdFor.set(originalTeam.id, savedTeam.id)
                 const score = teamScores[originalTeam.id]
                 if (score) {
                   await updateDoublesTeamScore(savedTeam.id, parseInt(score))
@@ -823,12 +827,20 @@ export function CurrentEventManager({
           }
         }
         // Save doubles CTP team, scoring type, and playoff winner
-        await updateDoublesCTPAndScoringType(
-          currentEvent.id, 
-          doublesCTPTeam || null, 
+        const ctpTeamId = savedIdFor.get(doublesCTPTeam) ?? doublesCTPTeam
+        const playoffTeamId = savedIdFor.get(playoffWinnerTeam) ?? playoffWinnerTeam
+        const settingsResult = await updateDoublesCTPAndScoringType(
+          currentEvent.id,
+          ctpTeamId || null,
           doublesScoringType,
-          playoffWinnerTeam || null
+          playoffTeamId || null
         )
+        if (settingsResult.success) {
+          setDoublesCTPTeam(ctpTeamId)
+          setPlayoffWinnerTeam(playoffTeamId)
+        } else {
+          alert(`CTP team, scoring type and playoff winner were NOT saved: ${settingsResult.error ?? "unknown error"}`)
+        }
       } else {
         // Save individual scores. Build from the full attendance set so players
         // without a score are still persisted (with their sanctioned flag).
