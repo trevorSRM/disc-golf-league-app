@@ -43,10 +43,13 @@ const DOUBLES_TOURNAMENT = new Date(2026, 10, 5) // Thu, Nov 5, 2026
 const SEASON_FINALE = new Date(2026, 10, 7) // Sat, Nov 7, 2026
 
 // One-off changes to the rotation, keyed by "YYYY-MM-DD". Only the listed
-// nights change; the rest of the rotation is unaffected.
-const OVERRIDES: Record<string, { location: ScheduleLocation; doubles: boolean }> = {
+// nights change, and only the fields given; the rest of the rotation is
+// unaffected.
+const OVERRIDES: Record<string, { location?: ScheduleLocation; doubles?: boolean; time?: string }> = {
   "2026-10-08": { location: "Akron", doubles: false },
   "2026-10-15": { location: "Akron", doubles: true },
+  "2026-10-29": { time: "5:30 PM" },
+  "2026-11-05": { time: "5:30 PM" },
 }
 
 function dateKey(d: Date): string {
@@ -91,13 +94,13 @@ export function getSchedule(): ScheduleEntry[] {
   for (let i = 2; i <= LAST_INDEX; i++) {
     const date = addDays(ANCHOR, i * 7)
     const override = OVERRIDES[dateKey(date)]
-    const location = override ? override.location : locationForIndex(i)
-    const doubles = override ? override.doubles : isDoublesIndex(i)
+    const location = override?.location ?? locationForIndex(i)
+    const doubles = override?.doubles ?? isDoublesIndex(i)
     const isDoublesTournament = isSameDay(date, DOUBLES_TOURNAMENT)
 
     entries.push({
       date,
-      time: "6:00 PM",
+      time: override?.time ?? "6:00 PM",
       location,
       isDoubles: doubles || isDoublesTournament,
       isTournament: isDoublesTournament,
