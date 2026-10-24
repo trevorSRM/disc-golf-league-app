@@ -117,10 +117,15 @@ export interface AceWithPlayer extends Ace {
 //
 // 2026 restart: the database was wiped late in the season, so the rest of 2026
 // runs on temporary rules. FOR NEXT SEASON: set MIN_HANDICAP_ROUNDS back to 3,
-// COUNT_MEMBERSHIP_FEES back to true, and MONEY_RESTART to null.
+// FIVE_ROUNDS_DROP back to 1, COUNT_MEMBERSHIP_FEES back to true, and
+// MONEY_RESTART to null.
 
 /** Rounds a player needs before they get their own handicap. Normally 3. */
 export const MIN_HANDICAP_ROUNDS = 1
+
+/** Worst rounds dropped when a player has exactly 5 rounds. Normally 1;
+ *  2 for the rest of 2026. */
+export const FIVE_ROUNDS_DROP = 2
 
 /** Count $25 per member in money collected. Off for 2026: fees paid before the
  *  wipe are already in the cash count below. */
@@ -145,28 +150,32 @@ export const PAR = 54
 // Rules:
 // - Use only the most recent 10 rounds
 // - Require MIN_HANDICAP_ROUNDS rounds to establish a handicap
-// - Scale drops based on rounds played:
+// - Scale drops based on rounds played (see handicapDropCount):
 //   - 1-3 rounds: drop 0
-//   - 4-5 rounds: drop 1
+//   - 4 rounds: drop 1
+//   - 5 rounds: drop FIVE_ROUNDS_DROP
 //   - 6+ rounds: drop 2
+
+/** How many worst rounds are dropped for a given number of rounds (max 10). */
+export function handicapDropCount(numRounds: number): number {
+  if (numRounds >= 6) return 2
+  if (numRounds === 5) return FIVE_ROUNDS_DROP
+  if (numRounds === 4) return 1
+  return 0
+}
+
 export function calculateHandicap(scores: number[]): number {
   if (scores.length < MIN_HANDICAP_ROUNDS) return 0
-  
+
   // Take only the most recent 10 rounds (scores should already be ordered newest first)
   const recentScores = scores.slice(0, 10)
   const numRounds = recentScores.length
-  
+
   // Sort ascending to find worst scores (highest = worst in golf)
   const sorted = [...recentScores].sort((a, b) => a - b)
-  
-  // Scale drops based on rounds played
-  let scoresToDrop = 0
-  if (numRounds >= 6) {
-    scoresToDrop = 2
-  } else if (numRounds >= 4) {
-    scoresToDrop = 1
-  }
-  
+
+  const scoresToDrop = handicapDropCount(numRounds)
+
   const trimmedScores = sorted.slice(0, sorted.length - scoresToDrop)
   
   const average = trimmedScores.reduce((a, b) => a + b, 0) / trimmedScores.length
