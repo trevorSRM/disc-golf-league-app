@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowDown, CalendarDays, Crown, Disc, Handshake, Lock, ShieldCheck, Swords, Ticket, Users2 } from "lucide-react"
+import { ArrowDown, CalendarDays, Crown, Disc, ExternalLink, Handshake, Lock, Map as MapIcon, ShieldCheck, Swords, Ticket, Users2 } from "lucide-react"
 import { getFinaleData, getFinances } from "@/lib/data"
 import {
   DOUBLES_FINALE,
@@ -14,6 +14,9 @@ import { CtpMap, DiscIcon, EventHeader, Leaderboard, PrizeBoard, money } from "@
 import { formatDate } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
+
+// UDisc caddie book for the doubles finale's 9-hole safari layout.
+const DOUBLES_LAYOUT_URL = "https://udisc.com/courses/cutshall-park-disc-golf-course-1SNs/layouts/171862/caddie-book"
 
 export const metadata: Metadata = {
   title: "Season Finale 2026 | FCDGL",
@@ -148,6 +151,28 @@ export default async function FinalePage() {
           data={doubles}
           icon="doubles"
         />
+        <a
+          href={DOUBLES_LAYOUT_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group flex flex-col gap-3 rounded-2xl border border-accent/40 bg-gradient-to-r from-accent/15 via-accent/5 to-transparent p-5 transition hover:border-accent/70 sm:flex-row sm:items-center"
+        >
+          <MapIcon className="h-10 w-10 shrink-0 text-accent" />
+          <div className="flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-lg font-black">New 9-hole Safari layout</span>
+              <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent-foreground">
+                Live on UDisc
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-white/65">
+              The doubles finale is played on a special 9-hole safari layout instead of the normal 18. It&apos;s live on UDisc now, so get out and practice it.
+            </p>
+          </div>
+          <span className="inline-flex items-center gap-2 text-sm font-bold text-accent group-hover:gap-3">
+            View on UDisc <ExternalLink className="h-4 w-4" />
+          </span>
+        </a>
         <div className="grid gap-8 lg:grid-cols-5">
           <div className="space-y-4 lg:col-span-3">
             <SectionLabel>Team Leaderboard</SectionLabel>
