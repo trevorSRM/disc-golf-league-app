@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowDown, CalendarDays, Crown, Disc, Lock, ShieldCheck, Swords, Ticket, Users2 } from "lucide-react"
+import { ArrowDown, CalendarDays, Crown, Disc, Handshake, Lock, ShieldCheck, Swords, Ticket, Users2 } from "lucide-react"
 import { getFinaleData, getFinances } from "@/lib/data"
 import {
   DOUBLES_FINALE,
@@ -79,6 +79,9 @@ export default async function FinalePage() {
                 <Disc className="h-4 w-4 text-money" /> plus the {money(acePool)} ace pool, still live
               </div>
             )}
+            <div className="mt-3 rounded-full border border-amber-400/40 bg-amber-400/10 px-4 py-1.5 text-xs font-semibold text-amber-300">
+              Prize money is finalized Nov 4. One regular round left, so amounts may still change.
+            </div>
           </div>
 
           {next && (
@@ -227,6 +230,21 @@ export default async function FinalePage() {
           <div className="flex gap-4 text-xs text-white/50">
             <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-primary/60" /> Akron</span>
             <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-accent/60" /> Rochester</span>
+          </div>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------------ SPONSORS */}
+      <section className="container mx-auto px-4 pb-14">
+        <div className="finale-border rounded-2xl p-[2px]">
+          <div className="flex flex-col items-center gap-3 rounded-2xl bg-background px-6 py-8 text-center sm:flex-row sm:text-left">
+            <Handshake className="h-10 w-10 shrink-0 text-gold" />
+            <div className="flex-1">
+              <div className="text-xl font-black">Want to sponsor the Season Finale?</div>
+              <p className="mt-1 text-sm text-white/65">
+                Sponsors grow the purse and get a shout-out at both events. If you&apos;d like to be a sponsor, contact Trevor.
+              </p>
+            </div>
           </div>
         </div>
       </section>
