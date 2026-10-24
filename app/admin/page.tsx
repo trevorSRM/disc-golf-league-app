@@ -7,7 +7,8 @@ import {
   getCalculatedFinances, 
   getAces,
   getAllPlayerHandicaps,
-  getPlayerMoneyRankings
+  getPlayerMoneyRankings,
+  getFinaleCtps
 } from "@/lib/data"
 import { AdminDashboard } from "@/components/admin/admin-dashboard"
 import { redirect } from "next/navigation"
@@ -30,8 +31,11 @@ export default async function AdminPage() {
   ])
 
   // Get doubles teams for current event if it exists
-  const currentEventTeams = currentEvent 
+  const currentEventTeams = currentEvent
     ? await getDoublesTeamsForWeek(currentEvent.id)
+    : []
+  const finaleCtps = currentEvent?.is_finale
+    ? await getFinaleCtps(currentEvent.id)
     : []
 
   return (
@@ -40,6 +44,7 @@ export default async function AdminPage() {
       events={events}
       currentEvent={currentEvent}
       currentEventTeams={currentEventTeams}
+      finaleCtps={finaleCtps}
       finances={finances}
       calculatedFinances={calculatedFinances}
       aces={aces}

@@ -10,7 +10,7 @@ import { PlayersManager } from "@/components/admin/players-manager"
 import { EventsManager } from "@/components/admin/events-manager"
 import { CurrentEventManager } from "@/components/admin/current-event-manager"
 import { MoneyManager } from "@/components/admin/money-manager"
-import { Player, Week, WeekWithDetails, LeagueFinances, AceWithPlayer, DoublesTeamWithPlayers } from "@/lib/types"
+import { Player, Week, WeekWithDetails, LeagueFinances, AceWithPlayer, DoublesTeamWithPlayers, FinaleCtp } from "@/lib/types"
 import { CalculatedFinances, PlayerMoneyRanking } from "@/lib/data"
 import { Users, Calendar, PlayCircle, DollarSign, Shield, AlertTriangle } from "lucide-react"
 
@@ -19,6 +19,7 @@ interface AdminDashboardProps {
   events: Week[]
   currentEvent: WeekWithDetails | null
   currentEventTeams: DoublesTeamWithPlayers[]
+  finaleCtps: FinaleCtp[]
   finances: LeagueFinances | null
   calculatedFinances: CalculatedFinances
   aces: AceWithPlayer[]
@@ -31,6 +32,7 @@ export function AdminDashboard({
   events: initialEvents,
   currentEvent,
   currentEventTeams,
+  finaleCtps,
   finances: initialFinances,
   calculatedFinances,
   aces: initialAces,
@@ -128,6 +130,7 @@ export function AdminDashboard({
             currentEvent={currentEvent}
             players={initialPlayers}
             doublesTeams={currentEventTeams}
+            finaleCtps={finaleCtps}
             handicaps={handicaps}
           />
         </TabsContent>

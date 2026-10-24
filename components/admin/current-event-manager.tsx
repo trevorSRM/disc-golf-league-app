@@ -14,7 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Player, WeekWithDetails, DoublesTeamWithPlayers, CardAssignment, calculateTeamHandicap, calculateWildManHandicap } from "@/lib/types"
+import { Player, WeekWithDetails, DoublesTeamWithPlayers, CardAssignment, FinaleCtp, calculateTeamHandicap, calculateWildManHandicap } from "@/lib/types"
+import { FinaleAdminPanel } from "@/components/admin/finale-admin-panel"
 import { 
   Calendar, Users2, MapPin, Shuffle, Save, Send, Target, 
   Trophy, AlertCircle, CheckCircle2, Edit2, X, Plus, UserPlus, Pencil
@@ -48,14 +49,16 @@ interface CurrentEventManagerProps {
   currentEvent: WeekWithDetails | null
   players: Player[]
   doublesTeams: DoublesTeamWithPlayers[]
+  finaleCtps: FinaleCtp[]
   handicaps: Map<string, number>
 }
 
-export function CurrentEventManager({ 
-  currentEvent, 
-  players, 
+export function CurrentEventManager({
+  currentEvent,
+  players,
   doublesTeams: initialDoublesTeams,
-  handicaps 
+  finaleCtps,
+  handicaps
 }: CurrentEventManagerProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -307,6 +310,10 @@ export function CurrentEventManager({
   }
 
   const attendingPlayers = currentEvent.attendance.map(a => a.player)
+  // Season finale: members with a (locked) handicap only.
+  const checkInPlayers = currentEvent.is_finale
+    ? playerList.filter(p => p.is_member && handicaps.has(p.id))
+    : playerList
   
   // Randomize doubles teams
   const randomizeTeams = () => {
@@ -841,6 +848,14 @@ export function CurrentEventManager({
         } else {
           alert(`CTP team, scoring type and playoff winner were NOT saved: ${settingsResult.error ?? "unknown error"}`)
         }
+        // Finale: a Wild Man's score lives on their attendance row, so persist it too.
+        if (currentEvent.is_finale) {
+          await updateAttendance(currentEvent.id, Array.from(selectedAttendance).map(playerId => ({
+            player_id: playerId,
+            score: scores[playerId] ? parseInt(scores[playerId]) : null,
+            sanctioned: sanctionedPlayers.has(playerId)
+          })))
+        }
       } else {
         // Save individual scores. Build from the full attendance set so players
         // without a score are still persisted (with their sanctioned flag).
@@ -1068,6 +1083,12 @@ export function CurrentEventManager({
                   Doubles
                 </Badge>
               )}
+              {currentEvent.is_finale && (
+                <Badge variant="outline" className="border-gold text-gold">
+                  <Trophy className="h-3 w-3 mr-1" />
+                  Season Finale
+                </Badge>
+              )}
               {currentEvent.cards_saved && (
                 <Badge variant="default" className="bg-accent">
                   <CheckCircle2 className="h-3 w-3 mr-1" />
@@ -1159,8 +1180,14 @@ export function CurrentEventManager({
                       Check players in, then tap the PDGA button to opt them into sanctioned play.
                     </p>
                   )}
-                  
-                  {/* Quick Add New Player */}
+                  {currentEvent.is_finale && (
+                    <p className="text-xs text-gold">
+                      Season Finale: only members with a handicap are listed. Entry is free.
+                    </p>
+                  )}
+
+                  {/* Quick Add New Player (not for the finale: new players have no handicap) */}
+                  {!currentEvent.is_finale && (
                   <div className="p-3 border border-dashed border-primary/50 rounded-lg bg-primary/5">
                     <div className="flex items-center gap-2 mb-2">
                       <UserPlus className="h-4 w-4 text-primary" />
@@ -1198,9 +1225,10 @@ export function CurrentEventManager({
                       </div>
                     </div>
                   </div>
-                  
+                  )}
+
                   <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto p-2 border rounded-lg">
-                    {playerList.map(player => {
+                    {checkInPlayers.map(player => {
                       const isAttending = selectedAttendance.has(player.id)
                       const isSanctioned = sanctionedPlayers.has(player.id)
                       return (
@@ -1682,7 +1710,8 @@ export function CurrentEventManager({
             )}
           </div>
           
-          {/* CTP Winner - Team for doubles, individual for singles */}
+          {/* CTP Winner - Team for doubles, individual for singles (finale CTPs live in the finale panel) */}
+          {!currentEvent.is_finale && (
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <Target className="h-4 w-4" />
@@ -1716,7 +1745,8 @@ export function CurrentEventManager({
               </Select>
             )}
           </div>
-          
+          )}
+
           {/* Doubles Scoring Type Toggle */}
           {currentEvent.is_doubles && (
             <div className="space-y-2">
@@ -1750,8 +1780,23 @@ export function CurrentEventManager({
             </div>
           )}
           
-          {/* Playoff Winner Selection - Only show when there's a tie */}
-          {tiedPlayers.length > 1 && !currentEvent.is_doubles && (
+          {/* Season finale: CTPs, playoffs and live payouts */}
+          {currentEvent.is_finale && (
+            <FinaleAdminPanel
+              event={currentEvent}
+              players={playerList}
+              cardAssignments={cardAssignments}
+              doublesTeams={doublesTeams}
+              scores={scores}
+              teamScores={teamScores}
+              effectiveHandicaps={effectiveHandicaps}
+              doublesScoringType={doublesScoringType}
+              initialCtps={finaleCtps}
+            />
+          )}
+
+          {/* Playoff Winner Selection - Only show when there's a tie (finale playoffs are in the finale panel) */}
+          {tiedPlayers.length > 1 && !currentEvent.is_doubles && !currentEvent.is_finale && (
             <div className="space-y-2 p-4 border border-amber-500/50 rounded-lg bg-amber-500/10">
               <Label className="flex items-center gap-2 text-amber-600">
                 <Trophy className="h-4 w-4" />
@@ -1775,7 +1820,7 @@ export function CurrentEventManager({
             </div>
           )}
           
-          {tiedTeams.length > 1 && currentEvent.is_doubles && (
+          {tiedTeams.length > 1 && currentEvent.is_doubles && !currentEvent.is_finale && (
             <div className="space-y-2 p-4 border border-amber-500/50 rounded-lg bg-amber-500/10">
               <Label className="flex items-center gap-2 text-amber-600">
                 <Trophy className="h-4 w-4" />
@@ -1801,8 +1846,21 @@ export function CurrentEventManager({
           
           {/* Action Buttons */}
           <div className="flex flex-wrap gap-2 sm:gap-3 pt-4 border-t">
-            <Button 
-              onClick={() => setShowSubmitConfirm(true)} 
+            {/* Finale: push scores to the live Finale page without submitting */}
+            {currentEvent.is_finale && (
+              <Button
+                onClick={handleSaveScores}
+                disabled={loading}
+                size="sm"
+                variant="outline"
+                className="gap-1.5 sm:gap-2 text-xs sm:text-sm border-gold text-gold hover:bg-gold/10"
+              >
+                <Save className="h-4 w-4 shrink-0" />
+                {loading ? "Saving..." : "Save Scores (go live)"}
+              </Button>
+            )}
+            <Button
+              onClick={() => setShowSubmitConfirm(true)}
               disabled={loading}
               size="sm"
               className="gap-1.5 sm:gap-2 text-xs sm:text-sm bg-accent hover:bg-accent/90"

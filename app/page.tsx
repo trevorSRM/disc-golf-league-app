@@ -1,4 +1,5 @@
-import { getPlayersWithStats, getLatestSubmittedEvent, getFinances, getAces, getSubmittedEvents, getHandicapsForEvent } from "@/lib/data"
+import { getPlayersWithStats, getLatestSubmittedEvent, getFinances, getAces, getSubmittedEvents, getHandicapsForEvent, getFinaleStatus } from "@/lib/data"
+import { FinaleBanner } from "@/components/finale/finale-banner"
 import { DashboardHero } from "@/components/dashboard-hero"
 import { LeaderboardCard } from "@/components/leaderboard-card"
 import { LatestWeekCard } from "@/components/latest-week-card"
@@ -8,12 +9,13 @@ import { QuickStatsCard } from "@/components/quick-stats-card"
 export const dynamic = "force-dynamic"
 
 export default async function DashboardPage() {
-  const [players, latestEvent, finances, aces, events] = await Promise.all([
+  const [players, latestEvent, finances, aces, events, finaleStatus] = await Promise.all([
     getPlayersWithStats(),
     getLatestSubmittedEvent(),
     getFinances(),
     getAces(),
-    getSubmittedEvents()
+    getSubmittedEvents(),
+    getFinaleStatus()
   ])
   
   // Get handicaps for the latest event (based on prior events only)
@@ -37,6 +39,9 @@ export default async function DashboardPage() {
       />
       
       <div className="container mx-auto px-4 pt-6">
+        <div className="mb-6">
+          <FinaleBanner {...finaleStatus} />
+        </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {/* Latest Event Results */}
           <div className="lg:col-span-2">

@@ -17,8 +17,17 @@ import {
   getSinglesPayouts,
   MIN_HANDICAP_ROUNDS,
   COUNT_MEMBERSHIP_FEES,
-  MONEY_RESTART
+  MONEY_RESTART,
+  FinaleCtp,
+  calculateWildManHandicap
 } from "@/lib/types"
+import {
+  computeDoublesFinale,
+  computeSinglesFinale,
+  doublesEntrantId,
+  type DoublesEntrant,
+  type FinaleResult
+} from "@/lib/finale"
 
 // Players
 export async function getPlayers(): Promise<Player[]> {
@@ -48,8 +57,8 @@ export async function getPlayersWithStats(): Promise<PlayerWithStats[]> {
   // guarantee newest-first order (required for calculateHandicap's most-recent-10 rule).
   const { data: attendanceRaw, error: attendanceError } = await supabase
     .from("attendance")
-    .select("player_id, score, week_id, weeks!inner(week_number, is_doubles)")
-  
+    .select("player_id, score, week_id, weeks!inner(week_number, is_doubles, is_finale)")
+
   if (attendanceError) throw attendanceError
   
   const attendance = [...(attendanceRaw || [])].sort((a, b) => {
@@ -130,10 +139,11 @@ export async function getPlayersWithStats(): Promise<PlayerWithStats[]> {
   
   // Calculate stats for each player
   const playersWithStats: PlayerWithStats[] = (players || []).map(player => {
-    // Only count singles attendance for handicap and rounds
+    // Only count singles attendance for handicap and rounds (never finale rounds:
+    // handicaps are locked after the last regular round)
     const playerAttendance = (attendance || []).filter(a => {
-      const weekInfo = a.weeks as { week_number: number; is_doubles: boolean }
-      return a.player_id === player.id && a.score !== null && !weekInfo.is_doubles
+      const weekInfo = a.weeks as { week_number: number; is_doubles: boolean; is_finale: boolean }
+      return a.player_id === player.id && a.score !== null && !weekInfo.is_doubles && !weekInfo.is_finale
     })
     const scores = playerAttendance.map(a => a.score as number)
     // Raw handicap (what they'd have if they were a member)
@@ -604,6 +614,8 @@ export interface CalculatedFinances {
     starting_cash: number
     /** First rounds since the restart, not charged. */
     free_rounds: number
+    /** Season finale prizes paid (submitted finale events). */
+    finale_payouts: number
   }
 }
 
@@ -626,18 +638,27 @@ export async function getCalculatedFinances(): Promise<CalculatedFinances> {
   // week_number is required so the payout-tier cutoff (Week 9+) is applied correctly.
   const { data: allSubmittedWeeks } = await supabase
     .from("weeks")
-    .select("id, week_number, is_doubles, ctp_winner_id, doubles_ctp_team_id")
+    .select("id, week_number, is_doubles, is_finale, ctp_winner_id, doubles_ctp_team_id")
     .eq("is_submitted", true)
+
+  // Finale events are free entry with their own payouts (added below), so their
+  // attendance and weekly-style prizes are left out of the regular totals.
+  const { data: finaleWeekRows } = await supabase
+    .from("weeks")
+    .select("id")
+    .eq("is_finale", true)
+  const finaleWeekIds = new Set((finaleWeekRows || []).map(w => w.id))
 
   // Money restart: weeks up to the restart are already in the cash count, so
   // leave them out of the money totals entirely.
+  const regularWeeks = allSubmittedWeeks?.filter(w => !w.is_finale)
   const allWeeks = MONEY_RESTART
-    ? allSubmittedWeeks?.filter(w => w.week_number > MONEY_RESTART.afterWeek)
-    : allSubmittedWeeks
+    ? regularWeeks?.filter(w => w.week_number > MONEY_RESTART.afterWeek)
+    : regularWeeks
   const countedWeekIds = new Set((allWeeks || []).map(w => w.id))
   const attendance = MONEY_RESTART
     ? allAttendance?.filter(a => countedWeekIds.has(a.week_id))
-    : allAttendance
+    : allAttendance?.filter(a => !finaleWeekIds.has(a.week_id))
 
   // Money restart: each player's first round since the wipe is free. A round is
   // free when the player has no attendance in any earlier week.
@@ -731,8 +752,16 @@ export async function getCalculatedFinances(): Promise<CalculatedFinances> {
   // Singles CTP = $20, Doubles CTP = $40 (both team members get $20)
   const ctpPayouts = (singlesCTPCount * 20) + (doublesCTPCount * 40)
   
+  // Season finale payouts (submitted finale events only)
+  const finale = finaleWeekIds.size > 0 ? await getFinaleData() : null
+  const finalePayouts = finale
+    ? [finale.doubles, finale.singles]
+        .filter(e => e.week?.is_submitted)
+        .reduce((total, e) => total + e.result.awarded, 0)
+    : 0
+
   const totalCollected = startingCash + membershipFees + weeklyFees
-  const totalPaidOut = hotRoundPayouts + secondPlacePayouts + lowRawPayouts + ctpPayouts + acePayouts
+  const totalPaidOut = hotRoundPayouts + secondPlacePayouts + lowRawPayouts + ctpPayouts + acePayouts + finalePayouts
   
   const totalWeeksWithScores = singlesWeeksWithScores.size + doublesWeeksWithScores.size
   const totalCTPCount = singlesCTPCount + doublesCTPCount
@@ -754,7 +783,8 @@ export async function getCalculatedFinances(): Promise<CalculatedFinances> {
       weeks_with_scores: totalWeeksWithScores,
       weeks_with_ctp: totalCTPCount,
       starting_cash: startingCash,
-      free_rounds: freeRounds
+      free_rounds: freeRounds,
+      finale_payouts: Math.round(finalePayouts * 100) / 100
     }
   }
 }
@@ -765,9 +795,10 @@ export async function getPlayerHandicap(playerId: string): Promise<number> {
   // Order by week_number descending to get most recent rounds first
   const { data, error } = await supabase
     .from("attendance")
-    .select("score, weeks!inner(week_number)")
+    .select("score, weeks!inner(week_number, is_finale)")
     .eq("player_id", playerId)
     .not("score", "is", null)
+    .eq("weeks.is_finale", false)
     .order("week_number", { referencedTable: "weeks", ascending: false })
   
   if (error || !data) return 0
@@ -779,15 +810,17 @@ export async function getPlayerHandicap(playerId: string): Promise<number> {
 // Get all player handicaps (singles only - doubles scores do not affect handicaps)
 export async function getAllPlayerHandicaps(): Promise<Map<string, number>> {
   const supabase = await createClient()
-  // Only get scores from singles weeks (is_doubles = false).
+  // Only get scores from singles weeks (is_doubles = false), never finale rounds
+  // (handicaps are locked after the last regular round).
   // NOTE: PostgREST does not reliably order root rows by an embedded table's column,
   // so we sort by week_number in JS to guarantee newest-first order (required for
   // calculateHandicap's most-recent-10 rule).
   const { data, error } = await supabase
     .from("attendance")
-    .select("player_id, score, weeks!inner(week_number, is_doubles)")
+    .select("player_id, score, weeks!inner(week_number, is_doubles, is_finale)")
     .not("score", "is", null)
     .eq("weeks.is_doubles", false)
+    .eq("weeks.is_finale", false)
   
   if (error || !data) return new Map()
   
@@ -825,6 +858,8 @@ export type PlayerMoneyRanking = {
   ctp_wins: number
   doubles_winnings: number
   ace_payouts: number
+  /** Season finale prizes (submitted finale events). Included in total_winnings. */
+  finale_winnings: number
   total_winnings: number
 }
 
@@ -842,14 +877,16 @@ export async function getPlayerMoneyRankings(): Promise<PlayerMoneyRanking[]> {
     .select("id, week_number, ctp_winner_id, playoff_winner_id, is_submitted")
     .eq("is_submitted", true)
     .eq("is_doubles", false)
+    .eq("is_finale", false) // finale payouts are added separately below
     .order("week_number", { ascending: true })
-  
+
   // Get all submitted DOUBLES weeks
   const { data: doublesWeeks } = await supabase
     .from("weeks")
     .select("id, week_number, doubles_ctp_team_id, doubles_scoring_type, playoff_winner_team_id, is_submitted")
     .eq("is_submitted", true)
     .eq("is_doubles", true)
+    .eq("is_finale", false)
     .order("week_number", { ascending: true })
   
   // Get all attendance records (for singles)
@@ -1055,6 +1092,16 @@ export async function getPlayerMoneyRankings(): Promise<PlayerMoneyRanking[]> {
     acePayouts.set(ace.player_id, (acePayouts.get(ace.player_id) || 0) + Number(ace.payout))
   }
   
+  // Season finale winnings (submitted finale events only)
+  const finaleWinnings = new Map<string, number>()
+  const finale = await getFinaleData()
+  for (const event of [finale.doubles, finale.singles]) {
+    if (!event.week?.is_submitted) continue
+    for (const [playerId, amount] of Object.entries(event.result.playerWinnings)) {
+      finaleWinnings.set(playerId, (finaleWinnings.get(playerId) || 0) + amount)
+    }
+  }
+
   // Build rankings
   const rankings: PlayerMoneyRanking[] = players.map(player => {
     const singlesHR = singlesHotRoundWins.get(player.id) || 0
@@ -1065,9 +1112,10 @@ export async function getPlayerMoneyRankings(): Promise<PlayerMoneyRanking[]> {
     const ctpWinCount = ctpWins.get(player.id) || 0
     const acePayout = acePayouts.get(player.id) || 0
     const doublesMoney = doublesWinnings.get(player.id) || 0
+    const finaleMoney = Math.round((finaleWinnings.get(player.id) || 0) * 100) / 100
     // prizeWinnings already holds tiered hot round + 2nd place + low raw dollars
-    const total = (prizeWinnings.get(player.id) || 0) + (ctpWinCount * 20) + acePayout
-    
+    const total = (prizeWinnings.get(player.id) || 0) + (ctpWinCount * 20) + acePayout + finaleMoney
+
     return {
       player_id: player.id,
       player_name: player.name,
@@ -1079,6 +1127,7 @@ export async function getPlayerMoneyRankings(): Promise<PlayerMoneyRanking[]> {
       ctp_wins: ctpWinCount,
       doubles_winnings: doublesMoney,
       ace_payouts: acePayout,
+      finale_winnings: finaleMoney,
       total_winnings: total
     }
   })
@@ -1101,6 +1150,7 @@ export async function getHandicapsForEvent(eventWeekNumber: number, attendingPla
     .select("id, week_number")
     .lt("week_number", eventWeekNumber)
     .eq("is_doubles", false)
+    .eq("is_finale", false) // handicaps are locked after the last regular round
     .order("week_number", { ascending: false })
   
   // Get player membership status
@@ -1186,4 +1236,166 @@ export async function getHandicapsForEvent(eventWeekNumber: number, attendingPla
   }
   
   return handicaps
+}
+
+// ---------------------------------------------------------------------------
+// Season finale
+
+export interface FinaleEventData {
+  /** The finale week, or null if it hasn't been created yet. */
+  week: WeekWithDetails | null
+  result: FinaleResult
+  ctps: FinaleCtp[]
+  /** Scores entered but not submitted yet. */
+  isLive: boolean
+  isFinal: boolean
+}
+
+export interface FinaleData {
+  doubles: FinaleEventData
+  singles: FinaleEventData
+  /** Members with a (locked) handicap: everyone eligible to play. */
+  eligible: { id: string; name: string; handicap: number }[]
+}
+
+// Members with at least MIN_HANDICAP_ROUNDS regular singles rounds, with their locked handicap.
+export async function getFinaleEligible(): Promise<FinaleData["eligible"]> {
+  const [players, handicaps] = await Promise.all([getPlayers(), getAllPlayerHandicaps()])
+  return players
+    .filter(p => p.is_member && handicaps.has(p.id))
+    .map(p => ({ id: p.id, name: p.name, handicap: handicaps.get(p.id) as number }))
+}
+
+export async function getFinaleData(): Promise<FinaleData> {
+  const supabase = await createClient()
+
+  const { data: finaleWeeks } = await supabase
+    .from("weeks")
+    .select("id, is_doubles, created_at")
+    .eq("is_finale", true)
+    .order("created_at", { ascending: false })
+
+  const doublesId = finaleWeeks?.find(w => w.is_doubles)?.id
+  const singlesId = finaleWeeks?.find(w => !w.is_doubles)?.id
+
+  const [doublesWeek, singlesWeek, eligible] = await Promise.all([
+    doublesId ? getWeekWithDetails(doublesId) : Promise.resolve(null),
+    singlesId ? getWeekWithDetails(singlesId) : Promise.resolve(null),
+    getFinaleEligible(),
+  ])
+
+  const weekIds = [doublesWeek?.id, singlesWeek?.id].filter(Boolean) as string[]
+  const { data: ctpRows } = weekIds.length
+    ? await supabase.from("finale_ctps").select("*").in("week_id", weekIds)
+    : { data: [] as FinaleCtp[] }
+  const ctpsFor = (weekId?: string) => (ctpRows || []).filter(c => c.week_id === weekId) as FinaleCtp[]
+
+  const status = (week: WeekWithDetails | null, hasScores: boolean) => ({
+    isLive: !!week && !week.is_submitted && (hasScores || week.cards_saved),
+    isFinal: !!week?.is_submitted,
+  })
+
+  // Doubles: teams plus any Wild Man (a player on a card without a partner).
+  let doubles: FinaleEventData
+  if (doublesWeek) {
+    const handicaps = await getHandicapsForEvent(
+      doublesWeek.week_number,
+      doublesWeek.attendance.map(a => a.player_id)
+    )
+    const teams = doublesWeek.doubles_teams || []
+    const teamed = new Set(teams.flatMap(t => [t.player1_id, t.player2_id]))
+    const entrants: DoublesEntrant[] = [
+      ...teams.map(t => ({
+        id: doublesEntrantId([t.player1_id, t.player2_id]),
+        name: t.player1_id === t.player2_id ? t.player1.name : `${t.player1.name} & ${t.player2.name}`,
+        playerIds: [t.player1_id, t.player2_id],
+        raw: t.score,
+        teamHandicap: Number(t.team_handicap || 0),
+      })),
+      ...doublesWeek.attendance
+        .filter(a => !teamed.has(a.player_id) && a.score !== null)
+        .map(a => ({
+          id: a.player_id,
+          name: `${a.player.name} (Wild Man)`,
+          playerIds: [a.player_id],
+          raw: a.score,
+          teamHandicap: calculateWildManHandicap(handicaps.get(a.player_id) || 0),
+        })),
+    ]
+    const ctps = ctpsFor(doublesWeek.id)
+    doubles = {
+      week: doublesWeek,
+      ctps,
+      result: computeDoublesFinale(
+        entrants,
+        doublesWeek.doubles_scoring_type || "handicap",
+        doublesWeek.finale_tiebreaks,
+        ctps,
+        doublesWeek.is_submitted
+      ),
+      ...status(doublesWeek, entrants.some(e => e.raw !== null)),
+    }
+  } else {
+    doubles = { week: null, ctps: [], result: computeDoublesFinale([], "handicap", null, [], false), isLive: false, isFinal: false }
+  }
+
+  // Singles: everyone checked in, with handicaps locked after the last regular round.
+  // Before the event exists, eligible members stand in so the handicap prizes show leaders.
+  let singles: FinaleEventData
+  if (singlesWeek) {
+    const handicaps = await getHandicapsForEvent(
+      singlesWeek.week_number,
+      singlesWeek.attendance.map(a => a.player_id)
+    )
+    const entrants = singlesWeek.attendance.map(a => ({
+      id: a.player_id,
+      name: a.player.name,
+      raw: a.score,
+      handicap: handicaps.get(a.player_id) || 0,
+    }))
+    const ctps = ctpsFor(singlesWeek.id)
+    singles = {
+      week: singlesWeek,
+      ctps,
+      result: computeSinglesFinale(entrants, singlesWeek.finale_tiebreaks, ctps, singlesWeek.is_submitted),
+      ...status(singlesWeek, entrants.some(e => e.raw !== null)),
+    }
+  } else {
+    singles = {
+      week: null,
+      ctps: [],
+      result: computeSinglesFinale(
+        eligible.map(e => ({ id: e.id, name: e.name, raw: null, handicap: e.handicap })),
+        null,
+        [],
+        false
+      ),
+      isLive: false,
+      isFinal: false,
+    }
+  }
+
+  return { doubles, singles, eligible }
+}
+
+export async function getFinaleCtps(weekId: string): Promise<FinaleCtp[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.from("finale_ctps").select("*").eq("week_id", weekId)
+  if (error) return []
+  return (data || []) as FinaleCtp[]
+}
+
+// Lightweight finale status for the homepage banner.
+export async function getFinaleStatus(): Promise<{ live: boolean; doublesFinal: boolean; singlesFinal: boolean }> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from("weeks")
+    .select("is_doubles, is_submitted")
+    .eq("is_finale", true)
+  const rows = data || []
+  return {
+    live: rows.some(r => !r.is_submitted),
+    doublesFinal: rows.some(r => r.is_doubles && r.is_submitted),
+    singlesFinal: rows.some(r => !r.is_doubles && r.is_submitted),
+  }
 }

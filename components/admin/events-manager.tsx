@@ -73,6 +73,7 @@ export function EventsManager({ initialEvents, players: initialPlayers, hasCurre
   const [newEventDate, setNewEventDate] = useState(getTodayDate())
   const [newEventCourse, setNewEventCourse] = useState("")
   const [newEventIsDoubles, setNewEventIsDoubles] = useState(false)
+  const [newEventIsFinale, setNewEventIsFinale] = useState(false)
   
   // Form state for edit
   const [editEventDate, setEditEventDate] = useState("")
@@ -92,7 +93,8 @@ export function EventsManager({ initialEvents, players: initialPlayers, hasCurre
         parseInt(newEventNumber),
         newEventDate,
         newEventCourse || null,
-        newEventIsDoubles
+        newEventIsDoubles,
+        newEventIsFinale
       )
       
       if (result.success && result.week) {
@@ -105,6 +107,7 @@ export function EventsManager({ initialEvents, players: initialPlayers, hasCurre
         setNewEventDate(getTodayDate())
         setNewEventCourse("")
         setNewEventIsDoubles(false)
+        setNewEventIsFinale(false)
         setCreateDialogOpen(false)
         router.refresh()
         // Players are now checked in on the Current Event tab
@@ -291,6 +294,22 @@ export function EventsManager({ initialEvents, players: initialPlayers, hasCurre
                   This is a Doubles event
                 </Label>
               </div>
+
+              <div className="flex items-start space-x-2 rounded-lg border border-gold/40 bg-gold/5 p-3">
+                <Checkbox
+                  id="is-finale"
+                  checked={newEventIsFinale}
+                  onCheckedChange={(checked) => setNewEventIsFinale(checked as boolean)}
+                />
+                <div className="space-y-1">
+                  <Label htmlFor="is-finale" className="cursor-pointer text-gold">
+                    Season Finale event
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Free entry, members with a handicap only. Payouts are calculated automatically on the Finale page.
+                  </p>
+                </div>
+              </div>
               
               <p className="text-sm text-muted-foreground">
                 After creating the event, you&apos;ll check players in on the Current Event tab.
@@ -467,6 +486,11 @@ export function EventsManager({ initialEvents, players: initialPlayers, hasCurre
                           <Badge variant="default" className="bg-primary text-xs">
                             <Users2 className="h-3 w-3 mr-1" />
                             Doubles
+                          </Badge>
+                        )}
+                        {event.is_finale && (
+                          <Badge variant="outline" className="border-gold text-gold text-xs">
+                            Finale
                           </Badge>
                         )}
                         {event.is_submitted ? (

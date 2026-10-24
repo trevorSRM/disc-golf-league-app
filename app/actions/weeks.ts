@@ -10,28 +10,31 @@ export async function createWeek(
   weekNumber: number,
   date: string,
   courseName: string | null,
-  isDoubles: boolean = false
+  isDoubles: boolean = false,
+  isFinale: boolean = false
 ): Promise<{ success: boolean; week?: Week; error?: string }> {
   try {
     await requireAdmin()
     const supabase = createAdminClient()
-    
+
     const { data, error } = await supabase
       .from("weeks")
-      .insert({ 
-        week_number: weekNumber, 
+      .insert({
+        week_number: weekNumber,
         date,
         course_name: courseName,
-        is_doubles: isDoubles
+        is_doubles: isDoubles,
+        is_finale: isFinale
       })
       .select()
       .single()
-    
+
     if (error) throw error
-    
+
     revalidatePath("/")
     revalidatePath("/admin")
     revalidatePath("/weeks")
+    revalidatePath("/finale")
     
     return { success: true, week: data }
   } catch (error) {

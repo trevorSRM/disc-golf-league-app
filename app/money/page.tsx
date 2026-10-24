@@ -143,6 +143,15 @@ export default async function MoneyPage() {
                 </span>
                 <span className="font-medium">${finances.breakdown.ace_payouts}</span>
               </div>
+              {finances.breakdown.finale_payouts > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    <Trophy className="h-4 w-4 inline mr-1" />
+                    Season Finale
+                  </span>
+                  <span className="font-medium">${finances.breakdown.finale_payouts}</span>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -341,6 +350,12 @@ export default async function MoneyPage() {
                             <span className="flex items-center gap-1">
                               <Disc className="h-3 w-3 text-accent" />
                               ${ranking.ace_payouts} Ace
+                            </span>
+                          )}
+                          {ranking.finale_winnings > 0 && (
+                            <span className="flex items-center gap-1 text-gold">
+                              <Trophy className="h-3 w-3" />
+                              ${ranking.finale_winnings} Finale
                             </span>
                           )}
                         </div>

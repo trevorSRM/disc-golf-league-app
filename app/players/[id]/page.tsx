@@ -89,8 +89,9 @@ export default async function PlayerDetailPage({ params }: Props) {
   
   // Sort by week_number descending so calculateHandicap sees the most recent rounds
   // first (its most-recent-10 rule). This matches getPlayersWithStats/getAllPlayerHandicaps.
+  // Finale rounds never count: handicaps are locked after the last regular round.
   const singlesAttendance = (attendance || [])
-    .filter(a => a.score !== null && !a.week?.is_doubles)
+    .filter(a => a.score !== null && !a.week?.is_doubles && !a.week?.is_finale)
     .sort((a, b) => (b.week?.week_number ?? 0) - (a.week?.week_number ?? 0))
   const scores = singlesAttendance.map(a => a.score as number)
   

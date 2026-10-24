@@ -49,6 +49,15 @@ export default async function CurrentEventPage() {
         </div>
       </div>
       
+      {currentEvent.is_finale && (
+        <Link
+          href={currentEvent.is_doubles ? "/finale#doubles" : "/finale#singles"}
+          className="block rounded-xl border border-gold/50 bg-gradient-to-r from-gold/15 to-transparent p-4 font-semibold text-gold hover:from-gold/25"
+        >
+          Season Finale: live leaderboard, payouts and CTPs →
+        </Link>
+      )}
+
       {/* Event Details */}
       <Card className="border-primary">
         <CardHeader>

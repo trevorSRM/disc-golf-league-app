@@ -18,11 +18,13 @@ import {
   PlayCircle,
   Menu,
   LogOut,
-  Shield
+  Shield,
+  Crown
 } from "lucide-react"
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: Trophy },
+  { href: "/finale", label: "Finale", icon: Crown, highlight: true },
   { href: "/players", label: "Players", icon: Users },
   { href: "/events", label: "Events", icon: Calendar },
   { href: "/schedule", label: "Schedule", icon: CalendarDays },
@@ -78,9 +80,11 @@ export function Navigation() {
                     href={item.href}
                     className={cn(
                       "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                      isActive 
-                        ? "bg-primary text-primary-foreground" 
-                        : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                      isActive
+                        ? "bg-primary text-primary-foreground"
+                        : item.highlight
+                          ? "text-gold hover:bg-gold/10"
+                          : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                     )}
                   >
                     <Icon className="h-4 w-4" />
@@ -117,9 +121,11 @@ export function Navigation() {
                           onClick={() => setMobileMenuOpen(false)}
                           className={cn(
                             "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
-                            isActive 
-                              ? "bg-primary text-primary-foreground" 
-                              : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                            isActive
+                              ? "bg-primary text-primary-foreground"
+                              : item.highlight
+                                ? "text-gold hover:bg-gold/10"
+                                : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                           )}
                         >
                           <Icon className="h-5 w-5" />

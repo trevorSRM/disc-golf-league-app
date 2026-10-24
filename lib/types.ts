@@ -19,6 +19,24 @@ export interface Week {
   doubles_ctp_team_id: string | null
   playoff_winner_id: string | null
   playoff_winner_team_id: string | null
+  /** Season finale event: free entry, members with a handicap only, payouts from lib/finale.ts. */
+  is_finale: boolean
+  finale_tiebreaks: FinaleTiebreaks | null
+  created_at: string
+}
+
+/** Playoff finish (1 = won the playoff) keyed by player id (singles) or team id (doubles). */
+export interface FinaleTiebreaks {
+  places?: Record<string, number>
+  lowRaw?: Record<string, number>
+}
+
+export interface FinaleCtp {
+  id: string
+  week_id: string
+  ctp_key: string
+  winner_player_ids: string[]
+  winner_label: string | null
   created_at: string
 }
 

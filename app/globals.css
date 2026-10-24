@@ -145,3 +145,122 @@
 .animate-slide-up {
   animation: slide-up 0.3s ease-out forwards;
 }
+
+/* ------------------------------------------------------------------ */
+/* Season Finale                                                       */
+/* ------------------------------------------------------------------ */
+
+.finale-glass {
+  background: linear-gradient(180deg, oklch(1 0 0 / 0.08), oklch(1 0 0 / 0.03));
+  border: 1px solid oklch(1 0 0 / 0.12);
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.08), 0 10px 30px -12px oklch(0 0 0 / 0.6);
+  backdrop-filter: blur(8px);
+}
+
+.finale-gold-text {
+  background: linear-gradient(
+    100deg,
+    var(--gold) 0%,
+    oklch(0.97 0.06 95) 22%,
+    var(--gold) 40%,
+    oklch(0.72 0.14 70) 60%,
+    oklch(0.97 0.06 95) 80%,
+    var(--gold) 100%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: finale-shimmer 6s linear infinite;
+}
+
+@keyframes finale-shimmer {
+  from { background-position: 0% 50%; }
+  to { background-position: 250% 50%; }
+}
+
+.finale-grid-bg {
+  background-image:
+    linear-gradient(oklch(1 0 0 / 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(1 0 0 / 0.04) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse at 50% 30%, black 30%, transparent 75%);
+}
+
+/* A disc flying an arc across the hero */
+.finale-disc {
+  offset-path: path("M -80 260 C 220 -40, 620 -40, 1100 200");
+  animation: finale-disc-flight 7s cubic-bezier(0.45, 0.05, 0.35, 1) infinite;
+}
+
+@keyframes finale-disc-flight {
+  0% { offset-distance: 0%; opacity: 0; transform: rotate(0deg); }
+  8% { opacity: 1; }
+  70% { opacity: 1; }
+  85%, 100% { offset-distance: 100%; opacity: 0; transform: rotate(1440deg); }
+}
+
+@keyframes finale-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.finale-float { animation: finale-float 5s ease-in-out infinite; }
+
+@keyframes finale-glow {
+  0%, 100% { box-shadow: 0 0 0 1px oklch(0.82 0.165 85 / 0.45), 0 0 18px -2px oklch(0.82 0.165 85 / 0.35); }
+  50% { box-shadow: 0 0 0 1px oklch(0.82 0.165 85 / 0.8), 0 0 34px 2px oklch(0.82 0.165 85 / 0.55); }
+}
+
+.finale-won { animation: finale-glow 2.8s ease-in-out infinite; }
+
+/* Animated gradient border (homepage banner) */
+.finale-border {
+  position: relative;
+  isolation: isolate;
+}
+.finale-border::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    var(--gold),
+    var(--primary),
+    oklch(0.7 0.2 330),
+    var(--gold),
+    var(--primary),
+    var(--gold)
+  );
+  background-size: 300% 100%;
+  animation: finale-shimmer 5s linear infinite;
+}
+
+@keyframes finale-sweep {
+  from { transform: translateX(-120%) skewX(-20deg); }
+  to { transform: translateX(320%) skewX(-20deg); }
+}
+
+.finale-sweep::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 30%;
+  background: linear-gradient(90deg, transparent, oklch(1 0 0 / 0.12), transparent);
+  animation: finale-sweep 3.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .finale-gold-text,
+  .finale-disc,
+  .finale-float,
+  .finale-won,
+  .finale-border::before,
+  .finale-sweep::after {
+    animation: none;
+  }
+  .finale-disc { display: none; }
+}

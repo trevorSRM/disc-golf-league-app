@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar, Flame, Target, Trophy, ArrowLeft, Medal, Users2 } from "lucide-react"
 import Link from "next/link"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { formatDate } from "@/lib/utils"
 import { PAR, calculateFinalScore, getSinglesPayouts } from "@/lib/types"
 
@@ -21,7 +21,12 @@ export default async function EventDetailPage({ params }: Props) {
   if (!event) {
     notFound()
   }
-  
+
+  // Finale events have their own results page with finale payouts.
+  if (event.is_finale) {
+    redirect(event.is_doubles ? "/finale#doubles" : "/finale#singles")
+  }
+
   // Get attending player IDs for handicap calculation
   const attendingPlayerIds = event.attendance.map(a => a.player_id)
   const handicaps = await getHandicapsForEvent(event.week_number, attendingPlayerIds)

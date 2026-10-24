@@ -216,6 +216,12 @@ export function MoneyManager({ initialFinances, calculatedFinances, players, ace
                   <span className="text-muted-foreground">Ace Payouts</span>
                   <span className="font-medium">${calculatedFinances.breakdown.ace_payouts}</span>
                 </div>
+                {calculatedFinances.breakdown.finale_payouts > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Season Finale</span>
+                    <span className="font-medium">${calculatedFinances.breakdown.finale_payouts}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
