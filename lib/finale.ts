@@ -27,7 +27,7 @@ export const DOUBLES_FINALE = {
   /** Countdown target (Eastern time). */
   startsAt: "2026-11-05T17:30:00-05:00" as string | null,
   timeLabel: "5:30 PM",
-  location: "Rochester",
+  location: "Akron",
   /** Per team, split between partners. */
   places: [60, 40, 20],
   ctps: [
@@ -41,10 +41,10 @@ export const DOUBLES_FINALE = {
 export const SINGLES_FINALE = {
   title: "End of Year Tournament",
   date: "2026-11-07",
-  /** Start time not set yet; set an ISO time here to turn on the countdown. */
-  startsAt: null as string | null,
-  timeLabel: "TBD",
-  location: "Akron & Rochester",
+  /** Countdown target (Eastern time). */
+  startsAt: "2026-11-07T10:00:00-05:00" as string | null,
+  timeLabel: "10:00 AM",
+  location: "Rochester",
   places: [140, 80, 55, 35, 30, 20],
   lowRaw: [50, 30],
   highestHandicap: 40,

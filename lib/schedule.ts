@@ -49,7 +49,7 @@ const OVERRIDES: Record<string, { location?: ScheduleLocation; doubles?: boolean
   "2026-10-08": { location: "Akron", doubles: false },
   "2026-10-15": { location: "Akron", doubles: true },
   "2026-10-29": { time: "5:30 PM" },
-  "2026-11-05": { time: "5:30 PM" },
+  "2026-11-05": { location: "Akron", time: "5:30 PM" },
 }
 
 function dateKey(d: Date): string {
@@ -115,8 +115,8 @@ export function getSchedule(): ScheduleEntry[] {
   // Season finale (Saturday) — standalone tournament with no rotation slot.
   entries.push({
     date: SEASON_FINALE,
-    time: "TBD",
-    location: null,
+    time: "10:00 AM",
+    location: "Rochester",
     isDoubles: false,
     isTournament: true,
     label: "End of Year Tournament",
