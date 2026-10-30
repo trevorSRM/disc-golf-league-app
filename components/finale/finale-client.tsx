@@ -135,3 +135,54 @@ export function LiveRefresh({ active, seconds = 20 }: { active: boolean; seconds
     </div>
   )
 }
+
+/** "Am I eligible?" — searchable list of members with a locked handicap. */
+export function EligibleChecker({ players }: { players: { id: string; name: string; handicap: number }[] }) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState("")
+  const sorted = [...players].sort((a, b) => a.name.localeCompare(b.name))
+  const q = query.trim().toLowerCase()
+  const matches = q ? sorted.filter(p => p.name.toLowerCase().includes(q)) : sorted
+  const fmt = (h: number) => (h === 0 ? "E" : `${h > 0 ? "+" : ""}${h.toFixed(1)}`)
+
+  return (
+    <div className="container mx-auto px-4 pb-5">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        className="w-full rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm font-bold text-gold transition hover:bg-gold/15 sm:w-auto"
+      >
+        {open ? "Hide eligible players" : `Am I eligible? See all ${players.length} eligible players`}
+      </button>
+      {open && (
+        <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+          <input
+            type="search"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Type your name…"
+            className="w-full rounded-lg border border-white/15 bg-background px-3 py-2 text-sm outline-none focus:border-gold/60 sm:max-w-sm"
+            autoFocus
+          />
+          {q && (
+            <p className={`mt-3 text-sm font-semibold ${matches.length ? "text-accent" : "text-amber-300"}`}>
+              {matches.length
+                ? "You're in! See you at the finale."
+                : "Not on the list. The finale is for members with at least one regular-season round. Talk to Trevor if that looks wrong."}
+            </p>
+          )}
+          <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-3 lg:grid-cols-4">
+            {matches.map(p => (
+              <div key={p.id} className="flex items-center justify-between gap-2 border-b border-white/5 py-1.5">
+                <span className="truncate">{p.name}</span>
+                <span className="shrink-0 tabular-nums text-xs text-white/45">HC {fmt(p.handicap)}</span>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-white/40">Handicaps shown are locked for the finale.</p>
+        </div>
+      )}
+    </div>
+  )
+}

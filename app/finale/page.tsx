@@ -9,7 +9,7 @@ import {
   SINGLES_FINALE,
   SINGLES_POOL,
 } from "@/lib/finale"
-import { Countdown, CountUp, LiveRefresh } from "@/components/finale/finale-client"
+import { Countdown, CountUp, EligibleChecker, LiveRefresh } from "@/components/finale/finale-client"
 import { CtpMap, DiscIcon, EventHeader, Leaderboard, PrizeBoard, money } from "@/components/finale/finale-sections"
 import { formatDate } from "@/lib/utils"
 
@@ -136,6 +136,7 @@ export default async function FinalePage() {
           <Rule icon={<Lock className="h-4 w-4" />} title="Handicaps locked" text="Set after the last regular round, Oct 29." />
           <Rule icon={<Swords className="h-4 w-4" />} title="Ties = playoff" text="Tied for a paid spot? Settle it on the course." />
         </div>
+        <EligibleChecker players={eligible} />
       </section>
 
       {/* ------------------------------------------------------------ DOUBLES */}
