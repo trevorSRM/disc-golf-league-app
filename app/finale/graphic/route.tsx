@@ -142,7 +142,7 @@ export async function GET(request: Request) {
         {/* events */}
         <div style={{ display: "flex", gap: 28, width: "100%", marginTop: 44 }}>
           <EventCard
-            night="NIGHT 1"
+            night="DAY 1"
             kind="DOUBLES"
             date="Thu, Nov 5"
             time={DOUBLES_FINALE.timeLabel}
@@ -152,7 +152,7 @@ export async function GET(request: Request) {
             accent={GOLD}
           />
           <EventCard
-            night="NIGHT 2"
+            night="DAY 2"
             kind="SINGLES"
             date="Sat, Nov 7"
             time={SINGLES_FINALE.timeLabel}
