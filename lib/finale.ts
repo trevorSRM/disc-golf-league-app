@@ -255,7 +255,10 @@ export function computeSinglesFinale(
   entrants: SinglesEntrant[],
   tiebreaks: FinaleTiebreaks | null,
   ctps: FinaleCtp[],
-  submitted: boolean
+  submitted: boolean,
+  /** Every eligible member with their locked handicap. When given, Highest and
+   *  Lowest Handicap are decided across this whole field and are final. */
+  handicapField?: SinglesEntrant[]
 ): FinaleResult {
   const winnings: Record<string, number> = {}
   const scored = entrants
@@ -285,15 +288,17 @@ export function computeSinglesFinale(
     ...placePrizes(lowRawRows, SINGLES_FINALE.lowRaw, "Low Raw", "lowraw", submitted, winnings),
   ]
 
-  // Highest / lowest handicap among entrants (locked handicaps). Ties split.
-  if (entrants.length > 0) {
-    const hcs = entrants.map(e => e.handicap)
-    const high = entrants.filter(e => e.handicap === Math.max(...hcs))
-    const low = entrants.filter(e => e.handicap === Math.min(...hcs))
+  // Highest / lowest handicap (locked handicaps, so final once the field is known). Ties split.
+  const hcField = handicapField ?? entrants
+  const hcStatus: PrizeStatus = handicapField || submitted ? "won" : "leading"
+  if (hcField.length > 0) {
+    const hcs = hcField.map(e => e.handicap)
+    const high = hcField.filter(e => e.handicap === Math.max(...hcs))
+    const low = hcField.filter(e => e.handicap === Math.min(...hcs))
     if (submitted) addWinnings(winnings, high.map(e => e.id), SINGLES_FINALE.highestHandicap)
     prizes.push(
-      { key: "hc:high", group: "Handicap", label: "Highest Handicap", amount: SINGLES_FINALE.highestHandicap, winners: high.map(e => e.name), status: submitted ? "won" : "leading", note: high.length > 1 ? "Tie, split evenly" : undefined },
-      { key: "hc:low", group: "Handicap", label: "Lowest Handicap", amount: null, winners: low.map(e => e.name), status: submitted ? "won" : "leading", note: "Prize: whatever's on hand" }
+      { key: "hc:high", group: "Handicap", label: "Highest Handicap", amount: SINGLES_FINALE.highestHandicap, winners: high.map(e => e.name), status: hcStatus, note: high.length > 1 ? "Tie, split evenly" : undefined },
+      { key: "hc:low", group: "Handicap", label: "Lowest Handicap", amount: null, winners: low.map(e => e.name), status: hcStatus, note: "Prize: whatever's on hand" }
     )
   } else {
     prizes.push(

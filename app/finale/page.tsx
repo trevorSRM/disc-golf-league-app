@@ -219,11 +219,9 @@ export default async function FinalePage() {
         <div className="space-y-4">
           <SectionLabel>The Purse</SectionLabel>
           <PrizeBoard prizes={singles.result.prizes} />
-          {!singles.week && (
-            <p className="text-xs text-white/45">
-              Handicap prizes show the current holders among all eligible members. Handicaps lock after Oct 29.
-            </p>
-          )}
+          <p className="text-xs text-white/45">
+            Handicaps are locked, so Highest and Lowest Handicap are final.
+          </p>
         </div>
         <div className="grid gap-8 lg:grid-cols-5">
           <div className="space-y-4 lg:col-span-3">

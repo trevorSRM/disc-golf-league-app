@@ -1357,7 +1357,13 @@ export async function getFinaleData(): Promise<FinaleData> {
     singles = {
       week: singlesWeek,
       ctps,
-      result: computeSinglesFinale(entrants, singlesWeek.finale_tiebreaks, ctps, singlesWeek.is_submitted),
+      result: computeSinglesFinale(
+        entrants,
+        singlesWeek.finale_tiebreaks,
+        ctps,
+        singlesWeek.is_submitted,
+        eligible.map(e => ({ id: e.id, name: e.name, raw: null, handicap: e.handicap }))
+      ),
       ...status(singlesWeek, entrants.some(e => e.raw !== null)),
     }
   } else {
@@ -1368,7 +1374,8 @@ export async function getFinaleData(): Promise<FinaleData> {
         eligible.map(e => ({ id: e.id, name: e.name, raw: null, handicap: e.handicap })),
         null,
         [],
-        false
+        false,
+        eligible.map(e => ({ id: e.id, name: e.name, raw: null, handicap: e.handicap }))
       ),
       isLive: false,
       isFinal: false,
