@@ -44,7 +44,7 @@ export const SINGLES_FINALE = {
   /** Countdown target (Eastern time). */
   startsAt: "2026-11-07T10:00:00-05:00" as string | null,
   timeLabel: "10:00 AM",
-  location: "Rochester",
+  location: "Starts at Rochester",
   places: [140, 80, 55, 35, 30, 20],
   lowRaw: [50, 30],
   highestHandicap: 40,
