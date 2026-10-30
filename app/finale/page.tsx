@@ -83,7 +83,7 @@ export default async function FinalePage() {
               </div>
             )}
             <div className="mt-3 rounded-full border border-amber-400/40 bg-amber-400/10 px-4 py-1.5 text-xs font-semibold text-amber-300">
-              Prize money is finalized Nov 4. One regular round left, so amounts may still change.
+              Prize money is locked in. These are the final payouts.
             </div>
           </div>
 

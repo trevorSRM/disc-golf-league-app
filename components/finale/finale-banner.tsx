@@ -61,7 +61,7 @@ export function FinaleBanner({
                 <div className="mt-1 text-sm text-white/70">
                   <span className="font-bold text-money">${FINALE_POOL}</span> in prizes · free entry · members only
                 </div>
-                <div className="text-xs text-white/45">Prize money finalized Nov 4</div>
+                <div className="text-xs text-white/45">Prize money locked in</div>
               </div>
             </div>
             <div className="flex items-center justify-between gap-4 sm:ml-auto">
