@@ -249,7 +249,7 @@ export default async function FinalePage() {
           <CtpMap
             specs={SINGLES_FINALE.ctps}
             prizes={singles.result.prizes}
-            perPlayerNote="Odd holes at Akron, even holes at Rochester. $10 per hole, split across the winning card."
+            perPlayerNote="Odd holes at Akron, even holes at Rochester. $10 per hole to the player who wins it."
           />
           <div className="flex gap-4 text-xs text-white/50">
             <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-primary/60" /> Akron</span>

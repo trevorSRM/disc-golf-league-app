@@ -48,7 +48,7 @@ export const SINGLES_FINALE = {
   places: [140, 80, 55, 35, 30, 20],
   lowRaw: [50, 30],
   highestHandicap: 40,
-  /** Odd holes at Akron, even holes at Rochester. Won by a card, split across it. */
+  /** Odd holes at Akron, even holes at Rochester. Each CTP is won by one player. */
   ctps: Array.from({ length: 18 }, (_, i): FinaleCtpSpec => {
     const hole = i + 1
     const course: FinaleCourse = hole % 2 === 1 ? "Akron" : "Rochester"

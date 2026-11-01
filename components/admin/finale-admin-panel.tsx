@@ -81,7 +81,7 @@ export function FinaleAdminPanel({
   const isDoubles = event.is_doubles
   const specs: FinaleCtpSpec[] = isDoubles ? DOUBLES_FINALE.ctps : SINGLES_FINALE.ctps
 
-  // Who can win a CTP: doubles = a team (or Wild Man), singles = a card.
+  // Who can win a CTP: doubles = a team (or Wild Man), singles = one player.
   const options: CtpOption[] = useMemo(() => {
     if (isDoubles) {
       const teamed = new Set(doublesTeams.flatMap(t => [t.player1_id, t.player2_id]))
@@ -95,13 +95,9 @@ export function FinaleAdminPanel({
         ...wildMen.map(id => ({ value: id, label: `${nameOf(id)} (Wild Man)`, playerIds: [id] })),
       ]
     }
-    return cardAssignments
-      .filter(c => c.players.length > 0)
-      .map(c => ({
-        value: doublesEntrantId(c.players),
-        label: `Hole ${c.hole} card: ${c.players.map(nameOf).join(", ")}`,
-        playerIds: c.players,
-      }))
+    return [...event.attendance]
+      .sort((x, y) => x.player.name.localeCompare(y.player.name))
+      .map(a => ({ value: a.player_id, label: a.player.name, playerIds: [a.player_id] }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDoubles, doublesTeams, cardAssignments, event.attendance, players])
 
@@ -144,7 +140,7 @@ export function FinaleAdminPanel({
   const handleCtpChange = async (spec: FinaleCtpSpec, value: string) => {
     const option = options.find(o => o.value === value)
     const playerIds = option?.playerIds ?? []
-    const label = option ? option.label.replace(/^Hole \d+ card: /, "") : null
+    const label = option ? option.label : null
     setSavingKey(spec.key)
     setError(null)
     try {
@@ -226,11 +222,11 @@ export function FinaleAdminPanel({
         <div className="space-y-3">
           <h4 className="flex items-center gap-2 font-semibold">
             <Target className="h-4 w-4 text-accent" />
-            CTP Winners {isDoubles ? "(team)" : "(card)"}
+            CTP Winners {isDoubles ? "(team)" : "(player)"}
           </h4>
           {options.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              {isDoubles ? "Save teams and cards first." : "Save cards first. Singles CTPs are won by a card."}
+              {isDoubles ? "Save teams and cards first." : "Check players in first."}
             </p>
           ) : (
             <div className="grid gap-2 sm:grid-cols-2">
