@@ -1,11 +1,13 @@
 // "Fair Teams": pair players so doubles team handicaps are as close together as possible.
 //
+// Never pairs players blocked in lib/team-rules.ts.
 // Objective: smallest gap between the highest and lowest team handicap; ties are
 // broken by how tightly teams sit around the average. With an odd field, the
 // Wild Man's handicap counts as a team too. Uses a seeded search, so the same
 // attendance always produces the same teams.
 
 import { calculateTeamHandicap, calculateWildManHandicap } from "@/lib/types"
+import { isBlockedPair } from "@/lib/team-rules"
 
 export interface FairTeamsResult {
   pairs: [string, string][]
@@ -41,19 +43,26 @@ export function fairestTeams(
   const wildHc = (a: number) => calculateWildManHandicap(a, scale)
 
   // An arrangement is an order of players: [0,1] is team 1, [2,3] team 2, ...; the last is the Wild Man when odd.
-  const evaluate = (order: number[]): [number, number] => {
+  // Score: [blocked pairs, high-to-low gap, spread around the average]; lower is better.
+  const evaluate = (order: number[]): [number, number, number] => {
     const t: number[] = []
-    for (let i = 0; i < teamCount; i++) t.push(teamHc(base[order[2 * i]].handicap, base[order[2 * i + 1]].handicap))
+    let blocked = 0
+    for (let i = 0; i < teamCount; i++) {
+      const a = base[order[2 * i]], b = base[order[2 * i + 1]]
+      if (isBlockedPair(a.id, b.id)) blocked++
+      t.push(teamHc(a.handicap, b.handicap))
+    }
     if (odd) t.push(wildHc(base[order[n - 1]].handicap))
     let min = Infinity, max = -Infinity, sum = 0
     for (const x of t) { if (x < min) min = x; if (x > max) max = x; sum += x }
     const mean = sum / t.length
     let v = 0
     for (const x of t) v += (x - mean) ** 2
-    return [max - min, v]
+    return [blocked, max - min, v]
   }
-  const better = (a: [number, number], b: [number, number]) =>
-    a[0] < b[0] - 1e-9 || (Math.abs(a[0] - b[0]) < 1e-9 && a[1] < b[1] - 1e-9)
+  const better = (a: [number, number, number], b: [number, number, number]) =>
+    a[0] < b[0] ||
+    (a[0] === b[0] && (a[1] < b[1] - 1e-9 || (Math.abs(a[1] - b[1]) < 1e-9 && a[2] < b[2] - 1e-9)))
 
   let bestOrder: number[] = base.map((_, i) => i)
   let best = evaluate(bestOrder)

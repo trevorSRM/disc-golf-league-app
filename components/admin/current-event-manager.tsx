@@ -18,6 +18,7 @@ import { Player, WeekWithDetails, DoublesTeamWithPlayers, CardAssignment, Finale
 import { FinaleAdminPanel } from "@/components/admin/finale-admin-panel"
 import { DOUBLES_FINALE } from "@/lib/finale"
 import { fairestTeams } from "@/lib/fair-teams"
+import { isBlockedPair } from "@/lib/team-rules"
 import { 
   Calendar, Users2, MapPin, Shuffle, Scale, Save, Send, Target,
   Trophy, AlertCircle, CheckCircle2, Edit2, X, Plus, UserPlus, Pencil
@@ -321,7 +322,16 @@ export function CurrentEventManager({
   
   // Randomize doubles teams
   const randomizeTeams = () => {
-    const shuffled = [...attendingPlayers].sort(() => Math.random() - 0.5)
+    // Reshuffle until no blocked pair (lib/team-rules.ts) ends up on a team.
+    const shuffle = () => [...attendingPlayers].sort(() => Math.random() - 0.5)
+    const hasBlocked = (order: Player[]) => {
+      for (let i = 0; i < order.length - 1; i += 2) {
+        if (isBlockedPair(order[i].id, order[i + 1].id)) return true
+      }
+      return false
+    }
+    let shuffled = shuffle()
+    for (let tries = 0; tries < 200 && hasBlocked(shuffled); tries++) shuffled = shuffle()
     const teams: { player1: Player; player2: Player; handicap: number }[] = []
     let wild: string | null = null
     
@@ -1065,6 +1075,10 @@ export function CurrentEventManager({
     const player1 = attendingPlayers.find(p => p.id === player1Id)
     const player2 = attendingPlayers.find(p => p.id === player2Id)
     if (!player1 || !player2) return
+    if (isBlockedPair(player1Id, player2Id)) {
+      alert(`${player1.name} and ${player2.name} can't be on the same team.`)
+      return
+    }
     
     const p1Hc = effectiveHandicaps.get(player1Id) || 0
     const p2Hc = effectiveHandicaps.get(player2Id) || 0
