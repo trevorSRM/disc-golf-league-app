@@ -212,15 +212,17 @@ function clampDoublesHandicap(handicap: number): number {
 }
 
 // Team Handicap = (Player A's capped handicap + Player B's capped handicap) / 3
-export function calculateTeamHandicap(player1Handicap: number, player2Handicap: number): number {
-  const p1 = clampDoublesHandicap(player1Handicap)
-  const p2 = clampDoublesHandicap(player2Handicap)
+// `scale` shrinks each player's 18-hole handicap BEFORE the cap (e.g. 0.63 for a
+// par-34 9-hole round). 1 = normal.
+export function calculateTeamHandicap(player1Handicap: number, player2Handicap: number, scale: number = 1): number {
+  const p1 = clampDoublesHandicap(player1Handicap * scale)
+  const p2 = clampDoublesHandicap(player2Handicap * scale)
   return Math.round(((p1 + p2) / 3) * 10) / 10
 }
 
-// Wild Man Handicap = (Wild Man's capped singles handicap × 2) / 3
-export function calculateWildManHandicap(singlesHandicap: number): number {
-  const capped = clampDoublesHandicap(singlesHandicap)
+// Wild Man Handicap = (Wild Man's capped singles handicap × 2) / 3 (same `scale` as above)
+export function calculateWildManHandicap(singlesHandicap: number, scale: number = 1): number {
+  const capped = clampDoublesHandicap(singlesHandicap * scale)
   return Math.round(((capped * 2) / 3) * 10) / 10
 }
 

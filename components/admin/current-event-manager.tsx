@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select"
 import { Player, WeekWithDetails, DoublesTeamWithPlayers, CardAssignment, FinaleCtp, calculateTeamHandicap, calculateWildManHandicap, eventName } from "@/lib/types"
 import { FinaleAdminPanel } from "@/components/admin/finale-admin-panel"
+import { DOUBLES_FINALE } from "@/lib/finale"
 import { 
   Calendar, Users2, MapPin, Shuffle, Save, Send, Target, 
   Trophy, AlertCircle, CheckCircle2, Edit2, X, Plus, UserPlus, Pencil
@@ -98,6 +99,9 @@ export function CurrentEventManager({
     setPlayerList(players)
   }, [players])
   
+  // Doubles finale: 9-hole par-34 layout, so each player's handicap is scaled before the cap.
+  const hcScale = currentEvent?.is_finale && currentEvent?.is_doubles ? DOUBLES_FINALE.handicapScale : 1
+  
   // Get attending player IDs
   const attendingPlayerIds = useMemo(() => {
     return currentEvent?.attendance?.map(a => a.player_id) || []
@@ -114,9 +118,8 @@ export function CurrentEventManager({
     for (const playerId of attendingPlayerIds) {
       const player = players.find(p => p.id === playerId)
       const rawHandicap = handicaps.get(playerId) || 0
-      // A player has a valid handicap if it's not 0 (0 means not enough rounds)
-      // We check is_member and if they have a real handicap
-      if (player?.is_member && rawHandicap !== 0 && rawHandicap > bestMemberHandicap) {
+      // A player has a handicap if they appear in the handicaps map (0.0 is a real handicap)
+      if (player?.is_member && handicaps.has(playerId) && rawHandicap > bestMemberHandicap) {
         bestMemberHandicap = rawHandicap
       }
     }
@@ -138,7 +141,7 @@ export function CurrentEventManager({
       const player = players.find(p => p.id === playerId)
       const rawHandicap = handicaps.get(playerId) || 0
       
-      if (player?.is_member && rawHandicap !== 0) {
+      if (player?.is_member && handicaps.has(playerId)) {
         // Member with valid handicap uses their own
         effective.set(playerId, rawHandicap)
       } else {
@@ -197,7 +200,7 @@ export function CurrentEventManager({
         // Handicap scoring: final score = raw - PAR + team handicap
         const p1Hc = effectiveHandicaps.get(team.player1_id) || 0
         const p2Hc = effectiveHandicaps.get(team.player2_id) || 0
-        const teamHc = calculateTeamHandicap(p1Hc, p2Hc)
+        const teamHc = calculateTeamHandicap(p1Hc, p2Hc, hcScale)
         effectiveScore = (rawScore - 54) + teamHc
       }
       
@@ -270,7 +273,7 @@ export function CurrentEventManager({
               // Non-members use best member's handicap
               const h1 = effectiveHandicaps.get(cardTeam.player1_id) || 0
               const h2 = effectiveHandicaps.get(cardTeam.player2_id) || 0
-              const teamHandicap = calculateTeamHandicap(h1, h2)
+              const teamHandicap = calculateTeamHandicap(h1, h2, hcScale)
               
               reconstructedTeams.push({
                 id: `reconstructed-${teamIdx++}`,
@@ -329,7 +332,7 @@ export function CurrentEventManager({
       teams.push({
         player1: p1,
         player2: p2,
-        handicap: calculateTeamHandicap(h1, h2)
+        handicap: calculateTeamHandicap(h1, h2, hcScale)
       })
     }
     
@@ -1032,9 +1035,9 @@ export function CurrentEventManager({
     const player2 = attendingPlayers.find(p => p.id === player2Id)
     if (!player1 || !player2) return
     
-    const p1Hc = effectiveHandicaps[player1Id] || 0
-    const p2Hc = effectiveHandicaps[player2Id] || 0
-    const teamHandicap = calculateTeamHandicap(p1Hc, p2Hc)
+    const p1Hc = effectiveHandicaps.get(player1Id) || 0
+    const p2Hc = effectiveHandicaps.get(player2Id) || 0
+    const teamHandicap = calculateTeamHandicap(p1Hc, p2Hc, hcScale)
     
     const newTeam: DoublesTeamWithPlayers = {
       id: `new-${Date.now()}`,
@@ -1564,7 +1567,7 @@ export function CurrentEventManager({
                           // Calculate team handicap with non-member rule applied
                           const p1Handicap = effectiveHandicaps.get(team.player1_id) || 0
                           const p2Handicap = effectiveHandicaps.get(team.player2_id) || 0
-                          const teamHandicap = calculateTeamHandicap(p1Handicap, p2Handicap)
+                          const teamHandicap = calculateTeamHandicap(p1Handicap, p2Handicap, hcScale)
                           return (
                             <div key={team.id} className="flex items-center gap-3 p-3">
                               <div className="flex-1">
@@ -1593,7 +1596,7 @@ export function CurrentEventManager({
                           if (!wildManOnCard) return null
                           // Wild man uses effective handicap (with non-member rule applied)
                           const effectiveHandicap = effectiveHandicaps.get(wildManOnCard) || 0
-                          const wildManDoublesHandicap = calculateWildManHandicap(effectiveHandicap)
+                          const wildManDoublesHandicap = calculateWildManHandicap(effectiveHandicap, hcScale)
                           return (
                             <div className="flex items-center gap-3 p-3 bg-primary/5">
                               <div className="flex-1">

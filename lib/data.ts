@@ -19,12 +19,14 @@ import {
   COUNT_MEMBERSHIP_FEES,
   MONEY_RESTART,
   FinaleCtp,
-  calculateWildManHandicap
+  calculateWildManHandicap,
+  calculateTeamHandicap
 } from "@/lib/types"
 import {
   computeDoublesFinale,
   computeSinglesFinale,
   doublesEntrantId,
+  DOUBLES_FINALE,
   type DoublesEntrant,
   type FinaleResult
 } from "@/lib/finale"
@@ -1310,7 +1312,14 @@ export async function getFinaleData(): Promise<FinaleData> {
         name: t.player1_id === t.player2_id ? t.player1.name : `${t.player1.name} & ${t.player2.name}`,
         playerIds: [t.player1_id, t.player2_id],
         raw: t.score,
-        teamHandicap: Number(t.team_handicap || 0),
+        // Recomputed from locked handicaps with the 9-hole scale (not the stored value).
+        teamHandicap: t.player1_id === t.player2_id
+          ? calculateWildManHandicap(handicaps.get(t.player1_id) || 0, DOUBLES_FINALE.handicapScale)
+          : calculateTeamHandicap(
+              handicaps.get(t.player1_id) || 0,
+              handicaps.get(t.player2_id) || 0,
+              DOUBLES_FINALE.handicapScale
+            ),
       })),
       ...doublesWeek.attendance
         .filter(a => !teamed.has(a.player_id) && a.score !== null)
@@ -1319,7 +1328,7 @@ export async function getFinaleData(): Promise<FinaleData> {
           name: `${a.player.name} (Wild Man)`,
           playerIds: [a.player_id],
           raw: a.score,
-          teamHandicap: calculateWildManHandicap(handicaps.get(a.player_id) || 0),
+          teamHandicap: calculateWildManHandicap(handicaps.get(a.player_id) || 0, DOUBLES_FINALE.handicapScale),
         })),
     ]
     const ctps = ctpsFor(doublesWeek.id)

@@ -111,10 +111,11 @@ export function FinaleAdminPanel({
           name: t.player1_id === t.player2_id ? t.player1.name : `${t.player1.name} & ${t.player2.name}`,
           playerIds: [t.player1_id, t.player2_id],
           raw: teamScores[t.id] ? parseInt(teamScores[t.id]) : null,
-          teamHandicap:
-            t.team_handicap !== null && t.team_handicap !== undefined
-              ? Number(t.team_handicap)
-              : calculateTeamHandicap(effectiveHandicaps.get(t.player1_id) || 0, effectiveHandicaps.get(t.player2_id) || 0),
+          teamHandicap: calculateTeamHandicap(
+            effectiveHandicaps.get(t.player1_id) || 0,
+            effectiveHandicaps.get(t.player2_id) || 0,
+            DOUBLES_FINALE.handicapScale
+          ),
         })),
         ...event.attendance
           .filter(a => !teamed.has(a.player_id) && scores[a.player_id])
@@ -123,7 +124,7 @@ export function FinaleAdminPanel({
             name: `${a.player.name} (Wild Man)`,
             playerIds: [a.player_id],
             raw: parseInt(scores[a.player_id]),
-            teamHandicap: calculateWildManHandicap(effectiveHandicaps.get(a.player_id) || 0),
+            teamHandicap: calculateWildManHandicap(effectiveHandicaps.get(a.player_id) || 0, DOUBLES_FINALE.handicapScale),
           })),
       ]
       return computeDoublesFinale(entrants, doublesScoringType, tiebreaks, ctps, false)

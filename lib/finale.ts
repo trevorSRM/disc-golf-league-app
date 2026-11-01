@@ -28,6 +28,10 @@ export const DOUBLES_FINALE = {
   startsAt: "2026-11-05T17:30:00-05:00" as string | null,
   timeLabel: "5:30 PM",
   location: "Akron",
+  /** 9-hole safari layout, par 34. */
+  par: 34,
+  /** Each player's 18-hole handicap × 34/54 before the ±10 cap and the team formula. */
+  handicapScale: 0.63,
   /** Per team, split between partners. */
   places: [60, 40, 20],
   ctps: [
@@ -345,7 +349,7 @@ export function computeDoublesFinale(
       .map(t => ({
         ...t,
         raw: t.raw as number,
-        score: scoringType === "raw" ? (t.raw as number) : (t.raw as number) - PAR + t.teamHandicap,
+        score: scoringType === "raw" ? (t.raw as number) : (t.raw as number) - DOUBLES_FINALE.par + t.teamHandicap,
       })),
     tiebreaks?.places
   )
