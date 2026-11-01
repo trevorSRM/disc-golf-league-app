@@ -1,3 +1,4 @@
+import { eventName } from "@/lib/types"
 import { getSubmittedEvents } from "@/lib/data"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -44,7 +45,7 @@ export default async function EventsPage() {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2 mb-2">
                         <span className="text-xl sm:text-2xl font-bold text-primary">
-                          Event {event.week_number}
+                          {eventName(event)}
                         </span>
                         {event.is_doubles && (
                           <Badge variant="default" className="bg-primary text-xs">

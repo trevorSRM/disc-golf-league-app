@@ -1,3 +1,4 @@
+import { eventName } from "@/lib/types"
 import { getCurrentEvent, getDoublesTeamsForWeek, getPlayers } from "@/lib/data"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -63,7 +64,7 @@ export default async function CurrentEventPage() {
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-4">
             <CardTitle className="flex flex-wrap items-center gap-3">
-              <span className="text-2xl sm:text-4xl font-bold text-primary">Event {currentEvent.week_number}</span>
+              <span className="text-2xl sm:text-4xl font-bold text-primary">{eventName(currentEvent)}</span>
               {currentEvent.is_doubles && (
                 <Badge variant="default" className="bg-primary text-sm sm:text-lg py-1">
                   <Users2 className="h-4 w-4 mr-1" />

@@ -1,3 +1,4 @@
+import { eventName } from "@/lib/types"
 import { getWeeks } from "@/lib/data"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -44,7 +45,7 @@ export default async function WeeksPage() {
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-2xl font-bold text-primary">
-                          Week {week.week_number}
+                          {eventName(week, "Week")}
                         </span>
                         {week.is_doubles && (
                           <Badge variant="default" className="bg-primary">

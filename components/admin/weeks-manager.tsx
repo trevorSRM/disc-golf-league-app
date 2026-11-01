@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Player, Week, DoublesTeamWithPlayers, calculateTeamHandicap } from "@/lib/types"
+import { Player, Week, DoublesTeamWithPlayers, calculateTeamHandicap, eventName } from "@/lib/types"
 import { Plus, Calendar, Users, Trash2, Shuffle, Users2 } from "lucide-react"
 import { createWeek, deleteWeek, updateAttendance, updateCTPWinner, saveDoublesTeams, updateDoublesTeamScore } from "@/app/actions/weeks"
 import { formatDate, todayDateString } from "@/lib/utils"
@@ -369,7 +369,7 @@ export function WeeksManager({ initialWeeks, players }: WeeksManagerProps) {
             >
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-bold">Week {week.week_number}</span>
+                  <span className="font-bold">{eventName(week, "Week")}</span>
                   <Badge variant="outline">
                     {formatDate(week.date, "MMM d, yyyy")}
                   </Badge>
@@ -416,7 +416,7 @@ export function WeeksManager({ initialWeeks, players }: WeeksManagerProps) {
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                Manage Week {selectedWeek?.week_number}
+                Manage {selectedWeek ? eventName(selectedWeek, "Week") : "Week"}
                 {selectedWeek?.course_name && ` - ${selectedWeek.course_name}`}
                 {selectedWeek?.is_doubles && (
                   <Badge variant="default" className="bg-primary">Doubles</Badge>

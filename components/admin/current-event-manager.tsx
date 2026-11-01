@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Player, WeekWithDetails, DoublesTeamWithPlayers, CardAssignment, FinaleCtp, calculateTeamHandicap, calculateWildManHandicap } from "@/lib/types"
+import { Player, WeekWithDetails, DoublesTeamWithPlayers, CardAssignment, FinaleCtp, calculateTeamHandicap, calculateWildManHandicap, eventName } from "@/lib/types"
 import { FinaleAdminPanel } from "@/components/admin/finale-admin-panel"
 import { 
   Calendar, Users2, MapPin, Shuffle, Save, Send, Target, 
@@ -1076,7 +1076,7 @@ export function CurrentEventManager({
         <CardHeader>
           <div>
             <CardTitle className="flex flex-wrap items-center gap-2">
-              <span className="text-xl sm:text-3xl font-bold text-primary">Event {currentEvent.week_number}</span>
+              <span className="text-xl sm:text-3xl font-bold text-primary">{eventName(currentEvent)}</span>
               {currentEvent.is_doubles && (
                 <Badge variant="default" className="bg-primary">
                   <Users2 className="h-3 w-3 mr-1" />

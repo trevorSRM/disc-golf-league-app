@@ -32,7 +32,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Player, Week } from "@/lib/types"
+import { Player, Week, eventName } from "@/lib/types"
 import { Plus, Calendar, Trash2, Users2, MapPin, CheckCircle, Clock, Edit2, AlertTriangle } from "lucide-react"
 import { createWeek, deleteWeek, updateAttendance, getWeekAttendance } from "@/app/actions/weeks"
 import { formatDate, todayDateString } from "@/lib/utils"
@@ -337,7 +337,7 @@ export function EventsManager({ initialEvents, players: initialPlayers, hasCurre
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
           <DialogContent className="w-[calc(100%-2rem)] max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Edit Event {editingEvent?.week_number}</DialogTitle>
+              <DialogTitle>Edit {editingEvent ? eventName(editingEvent) : "Event"}</DialogTitle>
             </DialogHeader>
             
             <div className="space-y-4 py-4">
@@ -481,7 +481,7 @@ export function EventsManager({ initialEvents, players: initialPlayers, hasCurre
                     </div>
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-1 sm:gap-2">
-                        <span className="font-semibold text-sm sm:text-base">Event {event.week_number}</span>
+                        <span className="font-semibold text-sm sm:text-base">{eventName(event)}</span>
                         {event.is_doubles && (
                           <Badge variant="default" className="bg-primary text-xs">
                             <Users2 className="h-3 w-3 mr-1" />
@@ -559,7 +559,7 @@ export function EventsManager({ initialEvents, players: initialPlayers, hasCurre
               Delete Event
             </AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">
-              Are you sure you want to delete Week {eventToDelete?.week_number}? This will permanently remove:
+              Are you sure you want to delete {eventToDelete ? eventName(eventToDelete, "Week") : "this event"}? This will permanently remove:
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-2 py-2">

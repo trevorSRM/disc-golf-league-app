@@ -270,3 +270,12 @@ export function getSinglesPayouts(attendanceCount: number, weekNumber?: number):
   }
   return STANDARD_PAYOUTS
 }
+
+/** Display name for an event: "Doubles Finale" / "Singles Finale", otherwise "Event N" (or "Week N"). */
+export function eventName(
+  week: Pick<Week, "week_number" | "is_doubles" | "is_finale">,
+  prefix: "Event" | "Week" = "Event"
+): string {
+  if (week.is_finale) return week.is_doubles ? "Doubles Finale" : "Singles Finale"
+  return `${prefix} ${week.week_number}`
+}

@@ -1,3 +1,4 @@
+import { eventName } from "@/lib/types"
 import { getWeekWithDetails, getHandicapsForEvent, getDoublesTeamsForWeek } from "@/lib/data"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -97,7 +98,7 @@ export default async function WeekDetailPage({ params }: Props) {
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <Calendar className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Week {week.week_number}</h1>
+          <h1 className="text-3xl font-bold">{eventName(week, "Week")}</h1>
           {week.is_doubles && (
             <Badge variant="default" className="bg-primary">
               <Users2 className="h-4 w-4 mr-1" />

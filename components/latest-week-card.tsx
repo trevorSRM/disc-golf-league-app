@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Flame, Target, Users2, DollarSign } from "lucide-react"
-import { WeekWithDetails, calculateFinalScore, calculateTeamHandicap, PAR, getSinglesPayouts } from "@/lib/types"
+import { WeekWithDetails, calculateFinalScore, calculateTeamHandicap, PAR, getSinglesPayouts, eventName } from "@/lib/types"
 import Link from "next/link"
 import { formatDate } from "@/lib/utils"
 
@@ -88,7 +88,7 @@ export function LatestWeekCard({ week, handicaps }: LatestWeekCardProps) {
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Calendar className="h-5 w-5 text-primary" />
-            Week {week.week_number}
+            {eventName(week, "Week")}
             {isDoubles && (
               <Badge variant="default" className="ml-2 text-xs">
                 <Users2 className="h-3 w-3 mr-1" />
