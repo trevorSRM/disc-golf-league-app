@@ -17,8 +17,9 @@ import {
 import { Player, WeekWithDetails, DoublesTeamWithPlayers, CardAssignment, FinaleCtp, calculateTeamHandicap, calculateWildManHandicap, eventName } from "@/lib/types"
 import { FinaleAdminPanel } from "@/components/admin/finale-admin-panel"
 import { DOUBLES_FINALE } from "@/lib/finale"
+import { fairestTeams } from "@/lib/fair-teams"
 import { 
-  Calendar, Users2, MapPin, Shuffle, Save, Send, Target, 
+  Calendar, Users2, MapPin, Shuffle, Scale, Save, Send, Target,
   Trophy, AlertCircle, CheckCircle2, Edit2, X, Plus, UserPlus, Pencil
 } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -361,6 +362,36 @@ export function CurrentEventManager({
     setDoublesTeams(newTeams)
   }
   
+  // Fair Teams: pair attending players so team handicaps are as close as possible
+  const fairTeams = () => {
+    const { pairs, wildManId } = fairestTeams(
+      attendingPlayers.map(p => ({ id: p.id, handicap: effectiveHandicaps.get(p.id) || 0 })),
+      hcScale
+    )
+    setWildMan(wildManId)
+    const byId = new Map(attendingPlayers.map(p => [p.id, p]))
+    setDoublesTeams(pairs.map(([a, b], idx) => {
+      const player1 = byId.get(a)!
+      const player2 = byId.get(b)!
+      return {
+        id: `temp-${idx}`,
+        event_id: null,
+        week_id: currentEvent.id,
+        player1_id: a,
+        player2_id: b,
+        team_handicap: calculateTeamHandicap(
+          effectiveHandicaps.get(a) || 0,
+          effectiveHandicaps.get(b) || 0,
+          hcScale
+        ),
+        score: null,
+        created_at: new Date().toISOString(),
+        player1,
+        player2
+      }
+    }))
+  }
+
   // Randomize cards (4 players per hole, overflow goes to hole 1)
   // Special rule: Mr. B always goes to hole 1 when present
   const randomizeCards = () => {
@@ -1149,6 +1180,12 @@ export function CurrentEventManager({
               <Button onClick={randomizeTeams} variant="outline" size="sm" className="gap-1 text-xs sm:text-sm sm:gap-2">
                 <Shuffle className="h-4 w-4 shrink-0" />
                 <span className="hidden xs:inline">Randomize</span> Teams
+              </Button>
+            )}
+            {currentEvent.is_doubles && (
+              <Button onClick={fairTeams} variant="outline" size="sm" className="gap-1 text-xs sm:text-sm sm:gap-2">
+                <Scale className="h-4 w-4 shrink-0" />
+                Fair Teams
               </Button>
             )}
             <Button onClick={randomizeCards} variant="outline" size="sm" className="gap-1 text-xs sm:text-sm sm:gap-2">
