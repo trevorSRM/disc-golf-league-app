@@ -1843,6 +1843,20 @@ export function CurrentEventManager({
             )}
           </div>
           
+          {/* Finale: push scores to the live Finale page without submitting */}
+          {currentEvent.is_finale && (
+            <Button
+              onClick={handleSaveScores}
+              disabled={loading}
+              size="sm"
+              variant="outline"
+              className="gap-1.5 sm:gap-2 text-xs sm:text-sm border-gold text-gold hover:bg-gold/10"
+            >
+              <Save className="h-4 w-4 shrink-0" />
+              {loading ? "Saving..." : "Save Scores (go live)"}
+            </Button>
+          )}
+
           {/* CTP Winner - Team for doubles, individual for singles (finale CTPs live in the finale panel) */}
           {!currentEvent.is_finale && (
           <div className="space-y-2">
@@ -1980,19 +1994,6 @@ export function CurrentEventManager({
           
           {/* Action Buttons */}
           <div className="flex flex-wrap gap-2 sm:gap-3 pt-4 border-t">
-            {/* Finale: push scores to the live Finale page without submitting */}
-            {currentEvent.is_finale && (
-              <Button
-                onClick={handleSaveScores}
-                disabled={loading}
-                size="sm"
-                variant="outline"
-                className="gap-1.5 sm:gap-2 text-xs sm:text-sm border-gold text-gold hover:bg-gold/10"
-              >
-                <Save className="h-4 w-4 shrink-0" />
-                {loading ? "Saving..." : "Save Scores (go live)"}
-              </Button>
-            )}
             <Button
               onClick={() => setShowSubmitConfirm(true)}
               disabled={loading}
