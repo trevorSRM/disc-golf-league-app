@@ -10,6 +10,7 @@ import { PlayersManager } from "@/components/admin/players-manager"
 import { EventsManager } from "@/components/admin/events-manager"
 import { CurrentEventManager } from "@/components/admin/current-event-manager"
 import { MoneyManager } from "@/components/admin/money-manager"
+import { SeasonLock } from "@/components/admin/season-lock"
 import { Player, Week, WeekWithDetails, LeagueFinances, AceWithPlayer, DoublesTeamWithPlayers, FinaleCtp } from "@/lib/types"
 import { CalculatedFinances, PlayerMoneyRanking } from "@/lib/data"
 import { Users, Calendar, PlayCircle, DollarSign, Shield, AlertTriangle } from "lucide-react"
@@ -25,6 +26,8 @@ interface AdminDashboardProps {
   aces: AceWithPlayer[]
   handicaps: Map<string, number>
   moneyRankings: PlayerMoneyRanking[]
+  lockedYears: number[]
+  seasonYear: number
 }
 
 export function AdminDashboard({ 
@@ -37,7 +40,9 @@ export function AdminDashboard({
   calculatedFinances,
   aces: initialAces,
   handicaps,
-  moneyRankings
+  moneyRankings,
+  lockedYears,
+  seasonYear
 }: AdminDashboardProps) {
   const { isAdmin } = useAdmin()
   const router = useRouter()
@@ -88,6 +93,8 @@ export function AdminDashboard({
           <p className="text-muted-foreground">Manage the FCDGL league</p>
         </div>
       </div>
+
+      <SeasonLock lockedYears={lockedYears} seasonYear={seasonYear} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-4 h-auto p-1">

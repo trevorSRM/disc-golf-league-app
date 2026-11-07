@@ -24,7 +24,7 @@ import {
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: Trophy },
-  { href: "/finale", label: "Finale", icon: Crown, highlight: true },
+  { href: "/seasons", label: "Seasons", icon: Crown, highlight: true },
   { href: "/players", label: "Players", icon: Users },
   { href: "/events", label: "Events", icon: Calendar },
   { href: "/schedule", label: "Schedule", icon: CalendarDays },

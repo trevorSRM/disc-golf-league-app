@@ -8,7 +8,8 @@ import {
   getAces,
   getAllPlayerHandicaps,
   getPlayerMoneyRankings,
-  getFinaleCtps
+  getFinaleCtps,
+  getSeasonSummaries
 } from "@/lib/data"
 import { AdminDashboard } from "@/components/admin/admin-dashboard"
 import { redirect } from "next/navigation"
@@ -19,7 +20,7 @@ export const dynamic = "force-dynamic"
 export default async function AdminPage() {
   if (!(await isAdminSession())) redirect("/")
 
-  const [players, events, currentEvent, finances, calculatedFinances, aces, handicaps, moneyRankings] = await Promise.all([
+  const [players, events, currentEvent, finances, calculatedFinances, aces, handicaps, moneyRankings, seasons] = await Promise.all([
     getPlayers(),
     getWeeks(),
     getCurrentEvent(),
@@ -27,8 +28,14 @@ export default async function AdminPage() {
     getCalculatedFinances(),
     getAces(),
     getAllPlayerHandicaps(),
-    getPlayerMoneyRankings()
+    getPlayerMoneyRankings(),
+    getSeasonSummaries()
   ])
+
+  // The season being played: year of the latest event (or this year with none yet).
+  const seasonYear = events.length
+    ? Math.max(...events.map(e => Number(e.date.slice(0, 4))))
+    : new Date().getFullYear()
 
   // Get doubles teams for current event if it exists
   const currentEventTeams = currentEvent
@@ -50,6 +57,8 @@ export default async function AdminPage() {
       aces={aces}
       handicaps={handicaps}
       moneyRankings={moneyRankings}
+      lockedYears={seasons.map(s => s.year)}
+      seasonYear={seasonYear}
     />
   )
 }

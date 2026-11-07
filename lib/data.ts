@@ -27,9 +27,14 @@ import {
   computeSinglesFinale,
   doublesEntrantId,
   DOUBLES_FINALE,
+  DOUBLES_POOL,
+  SINGLES_FINALE,
+  SINGLES_POOL,
   type DoublesEntrant,
-  type FinaleResult
+  type FinaleResult,
+  type FinaleStanding
 } from "@/lib/finale"
+import { FINALE_ONLY_SEASONS, type FinaleSnapshot, type SeasonSummary, type SeasonSummaryRow } from "@/lib/seasons"
 
 // Players
 export async function getPlayers(): Promise<Player[]> {
@@ -1415,4 +1420,95 @@ export async function getFinaleStatus(): Promise<{ live: boolean; doublesFinal: 
     doublesFinal: rows.some(r => r.is_doubles && r.is_submitted),
     singlesFinal: rows.some(r => !r.is_doubles && r.is_submitted),
   }
+}
+
+// ---------------------------------------------------------------------------
+// Locked season summaries
+
+export async function getSeasonSummaries(): Promise<SeasonSummaryRow[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("season_summaries")
+    .select("*")
+    .order("year", { ascending: false })
+  if (error) return []
+  return (data || []) as SeasonSummaryRow[]
+}
+
+export async function getSeasonSummary(year: number): Promise<SeasonSummaryRow | null> {
+  const supabase = await createClient()
+  const { data } = await supabase.from("season_summaries").select("*").eq("year", year).maybeSingle()
+  return (data as SeasonSummaryRow | null) ?? null
+}
+
+// Snapshot a season from the live tables. Standings keep their row keys but drop
+// player links, so the summary stands on its own after players are wiped.
+export async function buildSeasonSummary(year: number): Promise<SeasonSummary> {
+  const inYear = (date?: string | null) => !!date && date.startsWith(`${year}-`)
+  const [finale, aces] = await Promise.all([getFinaleData(), getAces()])
+  const unlink = (rows: FinaleStanding[]) => rows.map(r => ({ ...r, playerIds: [] }))
+
+  const singlesWeek = finale.singles.week
+  const doublesWeek = finale.doubles.week
+  const singles: FinaleSnapshot | null =
+    singlesWeek && inYear(singlesWeek.date)
+      ? {
+          title: SINGLES_FINALE.title,
+          date: singlesWeek.date,
+          location: "Akron & Rochester",
+          pool: SINGLES_POOL,
+          mode: "singles",
+          paidPlaces: SINGLES_FINALE.places.length,
+          standings: unlink(finale.singles.result.standings),
+          lowRaw: unlink(finale.singles.result.lowRaw || []),
+          lowRawPaid: SINGLES_FINALE.lowRaw.length,
+          prizes: finale.singles.result.prizes,
+          ctpSpecs: SINGLES_FINALE.ctps,
+          ctpNote: "$10 per hole.",
+        }
+      : null
+  const doubles: FinaleSnapshot | null =
+    doublesWeek && inYear(doublesWeek.date)
+      ? {
+          title: DOUBLES_FINALE.title,
+          date: doublesWeek.date,
+          location: doublesWeek.course_name || DOUBLES_FINALE.location,
+          pool: DOUBLES_POOL,
+          mode: doublesWeek.doubles_scoring_type === "raw" ? "doubles-raw" : "doubles-handicap",
+          paidPlaces: DOUBLES_FINALE.places.length,
+          standings: unlink(finale.doubles.result.standings),
+          prizes: finale.doubles.result.prizes,
+          ctpSpecs: DOUBLES_FINALE.ctps,
+          ctpNote: "$40 per team.",
+        }
+      : null
+
+  const finaleOnly = FINALE_ONLY_SEASONS.includes(year)
+  const finaleDates = [singlesWeek?.date, doublesWeek?.date].filter(Boolean)
+  const seasonAces = aces
+    .filter(a => inYear(a.date) && (!finaleOnly || finaleDates.includes(a.date)))
+    .map(a => ({ name: a.player?.name || "Unknown", course: a.course_name, hole: a.hole_number, date: a.date, payout: Number(a.payout) }))
+
+  const summary: SeasonSummary = { year, recap: finaleOnly ? "finale" : "full", singles, doubles, aces: seasonAces }
+  if (finaleOnly) return summary
+
+  const [players, weeks, money] = await Promise.all([getPlayersWithStats(), getSubmittedEvents(), getPlayerMoneyRankings()])
+  const yearWeeks = weeks.filter(w => inYear(w.date))
+  summary.stats = {
+    events: yearWeeks.length,
+    players: players.filter(p => p.total_rounds > 0).length,
+    members: players.filter(p => p.is_member).length,
+    rounds: players.reduce((n, p) => n + p.total_rounds, 0),
+  }
+  summary.moneyLeaders = money
+    .filter(m => m.total_winnings > 0)
+    .sort((a, b) => b.total_winnings - a.total_winnings)
+    .slice(0, 10)
+    .map(m => ({ name: m.player_name, total: m.total_winnings }))
+  summary.winsLeaders = players
+    .filter(p => p.wins > 0)
+    .sort((a, b) => b.wins - a.wins)
+    .slice(0, 10)
+    .map(p => ({ name: p.name, wins: p.wins, singles: p.singles_wins, doubles: p.doubles_wins }))
+  return summary
 }
