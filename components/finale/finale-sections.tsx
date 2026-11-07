@@ -195,7 +195,9 @@ export function Leaderboard({
                 <span className="text-right font-bold tabular-nums">
                   {mode === "low-raw" || mode === "doubles-raw" ? s.raw : toPar(s.score)}
                   {mode !== "low-raw" && mode !== "doubles-raw" && (
-                    <span className="ml-1 text-xs font-normal text-white/40">({s.raw})</span>
+                    <span className="ml-1 text-xs font-normal text-white/40">
+                      ({s.rounds && s.rounds.length > 1 ? s.rounds.join("+") : s.raw})
+                    </span>
                   )}
                 </span>
                 <span className="text-right text-sm font-bold tabular-nums">

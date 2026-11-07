@@ -1360,6 +1360,7 @@ export async function getFinaleData(): Promise<FinaleData> {
       id: a.player_id,
       name: a.player.name,
       raw: a.score,
+      raw2: a.score_r2 ?? null,
       handicap: handicaps.get(a.player_id) || 0,
     }))
     const ctps = ctpsFor(singlesWeek.id)

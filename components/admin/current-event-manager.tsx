@@ -73,6 +73,8 @@ export function CurrentEventManager({
   
   // Score state
   const [scores, setScores] = useState<Record<string, string>>({})
+  // Singles finale is two rounds: `scores` is round 1, this is round 2.
+  const [scoresR2, setScoresR2] = useState<Record<string, string>>({})
   const [teamScores, setTeamScores] = useState<Record<string, string>>({})
   const [ctpWinner, setCtpWinner] = useState<string>(currentEvent?.ctp_winner_id || "")
   const [doublesCTPTeam, setDoublesCTPTeam] = useState<string>(currentEvent?.doubles_ctp_team_id || "")
@@ -103,6 +105,7 @@ export function CurrentEventManager({
   
   // Doubles finale: 9-hole par-34 layout, so each player's handicap is scaled before the cap.
   const hcScale = currentEvent?.is_finale && currentEvent?.is_doubles ? DOUBLES_FINALE.handicapScale : 1
+  const twoRounds = !!currentEvent?.is_finale && !currentEvent?.is_doubles
   
   // Get attending player IDs
   const attendingPlayerIds = useMemo(() => {
@@ -230,6 +233,7 @@ export function CurrentEventManager({
   useEffect(() => {
     if (currentEvent?.attendance) {
       const initialScores: Record<string, string> = {}
+      const initialScoresR2: Record<string, string> = {}
       const initialAttendance = new Set<string>()
       const initialSanctioned = new Set<string>()
       currentEvent.attendance.forEach(a => {
@@ -240,8 +244,12 @@ export function CurrentEventManager({
         if (a.score !== null) {
           initialScores[a.player_id] = String(a.score)
         }
+        if (a.score_r2 != null) {
+          initialScoresR2[a.player_id] = String(a.score_r2)
+        }
       })
       setScores(initialScores)
+      setScoresR2(initialScoresR2)
       setSelectedAttendance(initialAttendance)
       setSanctionedPlayers(initialSanctioned)
     }
@@ -803,6 +811,41 @@ export function CurrentEventManager({
     setCardAssignments(assignments)
   }
   
+  // Singles finale round 2: re-card by round 1 standing after handicap. Lead card
+  // (best 4) on hole 1, next on hole 3, and so on; 3-somes go at the back. Ties on
+  // the card order go to the lower raw score. Mr. B / Reeds / PDGA rules don't apply.
+  const makeRoundTwoCards = () => {
+    const missing = attendingPlayers.filter(p => !scores[p.id])
+    if (missing.length > 0) {
+      alert(`Enter round 1 scores first. Missing: ${missing.map(p => p.name).join(", ")}`)
+      return
+    }
+    const holes = [1, 3, 5, 7, 9, 11, 13, 15, 17, 2, 4, 6, 8, 10, 12, 14, 16, 18]
+    const seeded = attendingPlayers
+      .map(p => {
+        const raw = parseInt(scores[p.id])
+        return { id: p.id, name: p.name, raw, score: raw - 54 + (effectiveHandicaps.get(p.id) || 0) }
+      })
+      .sort((a, b) => a.score - b.score || a.raw - b.raw || a.name.localeCompare(b.name))
+
+    const n = seeded.length
+    let sizes: number[]
+    if (n < 6) {
+      sizes = [n]
+    } else {
+      const threes = [0, 3, 2, 1][n % 4]
+      sizes = [...Array((n - threes * 3) / 4).fill(4), ...Array(threes).fill(3)]
+    }
+
+    const assignments: CardAssignment[] = []
+    let idx = 0
+    sizes.forEach((size, i) => {
+      assignments.push({ hole: holes[i], players: seeded.slice(idx, idx + size).map(p => p.id) })
+      idx += size
+    })
+    setCardAssignments(assignments)
+  }
+
   // Save cards to database (pushes to public)
   const handleSaveCards = async () => {
     if (cardAssignments.length === 0) {
@@ -906,6 +949,7 @@ export function CurrentEventManager({
         const attendanceData = Array.from(selectedAttendance).map(playerId => ({
           player_id: playerId,
           score: scores[playerId] ? parseInt(scores[playerId]) : null,
+          ...(twoRounds && { score_r2: scoresR2[playerId] ? parseInt(scoresR2[playerId]) : null }),
           sanctioned: sanctionedPlayers.has(playerId)
         }))
         await updateAttendance(currentEvent.id, attendanceData)
@@ -1206,6 +1250,17 @@ export function CurrentEventManager({
               <Shuffle className="h-4 w-4 shrink-0" />
               <span className="hidden xs:inline">Randomize</span> Cards
             </Button>
+            {twoRounds && (
+              <Button
+                onClick={makeRoundTwoCards}
+                variant="outline"
+                size="sm"
+                className="gap-1 text-xs sm:text-sm sm:gap-2 border-gold text-gold hover:bg-gold/10"
+              >
+                <Trophy className="h-4 w-4 shrink-0" />
+                Make Round 2 Cards
+              </Button>
+            )}
             <Button 
               onClick={handleSaveCards} 
               disabled={loading || cardAssignments.length === 0}
@@ -1722,13 +1777,25 @@ export function CurrentEventManager({
                               <Input
                                 type="number"
                                 className="w-20"
-                                placeholder="Score"
+                                placeholder={twoRounds ? "R1" : "Score"}
                                 value={scores[player.id] || ""}
                                 onChange={(e) => setScores(prev => ({
                                   ...prev,
                                   [player.id]: e.target.value
                                 }))}
                               />
+                              {twoRounds && (
+                                <Input
+                                  type="number"
+                                  className="w-20"
+                                  placeholder="R2"
+                                  value={scoresR2[player.id] || ""}
+                                  onChange={(e) => setScoresR2(prev => ({
+                                    ...prev,
+                                    [player.id]: e.target.value
+                                  }))}
+                                />
+                              )}
                             </div>
                           )
                         })}
@@ -1750,13 +1817,25 @@ export function CurrentEventManager({
                       <Input
                         type="number"
                         className="w-20"
-                        placeholder="Score"
+                        placeholder={twoRounds ? "R1" : "Score"}
                         value={scores[player.id] || ""}
                         onChange={(e) => setScores(prev => ({
                           ...prev,
                           [player.id]: e.target.value
                         }))}
                       />
+                      {twoRounds && (
+                        <Input
+                          type="number"
+                          className="w-20"
+                          placeholder="R2"
+                          value={scoresR2[player.id] || ""}
+                          onChange={(e) => setScoresR2(prev => ({
+                            ...prev,
+                            [player.id]: e.target.value
+                          }))}
+                        />
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1842,6 +1921,7 @@ export function CurrentEventManager({
               cardAssignments={cardAssignments}
               doublesTeams={doublesTeams}
               scores={scores}
+              scoresR2={scoresR2}
               teamScores={teamScores}
               effectiveHandicaps={effectiveHandicaps}
               doublesScoringType={doublesScoringType}

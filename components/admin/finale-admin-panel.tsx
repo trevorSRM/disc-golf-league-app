@@ -42,6 +42,8 @@ interface FinaleAdminPanelProps {
   doublesTeams: DoublesTeamWithPlayers[]
   /** Unsaved score inputs from the event manager (live preview). */
   scores: Record<string, string>
+  /** Singles finale: round 2 score inputs. */
+  scoresR2?: Record<string, string>
   teamScores: Record<string, string>
   effectiveHandicaps: Map<string, number>
   doublesScoringType: "raw" | "handicap"
@@ -66,6 +68,7 @@ export function FinaleAdminPanel({
   cardAssignments,
   doublesTeams,
   scores,
+  scoresR2 = {},
   teamScores,
   effectiveHandicaps,
   doublesScoringType,
@@ -133,10 +136,11 @@ export function FinaleAdminPanel({
       id: a.player_id,
       name: a.player.name,
       raw: scores[a.player_id] ? parseInt(scores[a.player_id]) : null,
+      raw2: scoresR2[a.player_id] ? parseInt(scoresR2[a.player_id]) : null,
       handicap: effectiveHandicaps.get(a.player_id) || 0,
     }))
     return computeSinglesFinale(entrants, tiebreaks, ctps, false)
-  }, [isDoubles, doublesTeams, teamScores, scores, event.attendance, effectiveHandicaps, doublesScoringType, tiebreaks, ctps])
+  }, [isDoubles, doublesTeams, teamScores, scores, event.attendance, effectiveHandicaps, doublesScoringType, tiebreaks, ctps, scoresR2])
 
   const handleCtpChange = async (spec: FinaleCtpSpec, value: string) => {
     const option = options.find(o => o.value === value)

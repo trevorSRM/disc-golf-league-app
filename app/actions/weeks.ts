@@ -126,21 +126,29 @@ export async function deleteWeek(
 
 export async function updateAttendance(
   weekId: string,
-  attendanceData: { player_id: string; score: number | null; sanctioned?: boolean }[]
+  attendanceData: { player_id: string; score: number | null; score_r2?: number | null; sanctioned?: boolean }[]
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await requireAdmin()
     const supabase = createAdminClient()
-    
+
+    // Round 2 scores (singles finale) survive callers that don't send them.
+    const { data: existing } = await supabase
+      .from("attendance")
+      .select("player_id, score_r2")
+      .eq("week_id", weekId)
+    const existingR2 = new Map((existing || []).map(a => [a.player_id, a.score_r2 as number | null]))
+
     // Delete existing attendance for this week
     await supabase.from("attendance").delete().eq("week_id", weekId)
-    
+
     // Insert new attendance records
     if (attendanceData.length > 0) {
       const records = attendanceData.map(a => ({
         week_id: weekId,
         player_id: a.player_id,
         score: a.score,
+        score_r2: a.score_r2 !== undefined ? a.score_r2 : existingR2.get(a.player_id) ?? null,
         sanctioned: a.sanctioned ?? false
       }))
       

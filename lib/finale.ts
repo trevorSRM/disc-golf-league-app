@@ -182,6 +182,8 @@ export interface FinaleStanding {
   name: string
   playerIds: string[]
   raw: number
+  /** Singles finale: raw score of each round played (raw is their total). */
+  rounds?: number[]
   handicap: number
   /** The score that ranks the field (final score, or raw in RAW doubles). */
   score: number
@@ -251,10 +253,15 @@ function placePrizes(
 export interface SinglesEntrant {
   id: string
   name: string
+  /** Round 1 raw score. */
   raw: number | null
+  /** Round 2 raw score. */
+  raw2?: number | null
   handicap: number
 }
 
+// The singles finale is two 18-hole rounds. The handicap applies to each round,
+// so the final score is (R1 - par + HC) + (R2 - par + HC). Low Raw is R1 + R2.
 export function computeSinglesFinale(
   entrants: SinglesEntrant[],
   tiebreaks: FinaleTiebreaks | null,
@@ -267,10 +274,13 @@ export function computeSinglesFinale(
   const winnings: Record<string, number> = {}
   const scored = entrants
     .filter(e => e.raw !== null)
-    .map(e => ({ ...e, raw: e.raw as number, playerIds: [e.id] }))
+    .map(e => {
+      const rounds = [e.raw as number, ...(e.raw2 != null ? [e.raw2] : [])]
+      return { ...e, raw: sum(rounds), rounds, playerIds: [e.id] }
+    })
 
   const placeRows = rankWithPlayoffs(
-    scored.map(e => ({ ...e, score: e.raw - PAR + e.handicap })),
+    scored.map(e => ({ ...e, score: e.raw - e.rounds.length * (PAR - e.handicap) })),
     tiebreaks?.places
   )
   const lowRawRows = rankWithPlayoffs(scored.map(e => ({ ...e, score: e.raw })), tiebreaks?.lowRaw)
@@ -280,6 +290,7 @@ export function computeSinglesFinale(
     name: r.item.name,
     playerIds: r.item.playerIds,
     raw: r.item.raw,
+    rounds: r.item.rounds,
     handicap: r.item.handicap,
     score: r.item.score,
     position: r.position,

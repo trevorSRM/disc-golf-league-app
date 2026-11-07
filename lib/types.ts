@@ -55,6 +55,8 @@ export interface Attendance {
   week_id: string
   player_id: string
   score: number | null
+  /** Singles finale only: round 2 score (`score` is round 1). */
+  score_r2?: number | null
   sanctioned: boolean
   created_at: string
 }
