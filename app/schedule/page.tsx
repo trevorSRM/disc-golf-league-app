@@ -23,6 +23,14 @@ export default function SchedulePage() {
         </div>
       </div>
 
+      {schedule.length === 0 && (
+        <Card>
+          <CardContent className="p-6 text-center text-muted-foreground">
+            The {new Date().getFullYear() + (new Date().getMonth() >= 9 ? 1 : 0)} schedule is coming soon.
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {schedule.map((entry, index) => {
           const isNext = index === nextIndex

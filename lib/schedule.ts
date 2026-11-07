@@ -1,18 +1,17 @@
 // Deterministic league schedule.
 //
 // Rules:
-//  - League night is every Thursday at 6:00 PM.
+//  - League night is every Thursday (default 6:00 PM).
 //  - Locations alternate weekly between Akron and Rochester.
 //  - Every 4th Thursday is Random Doubles (it still rotates location and
 //    consumes a slot in the alternation).
-//  - Special end-of-year events:
-//      * Thursday, Nov 5, 2026  -> End of Year Doubles Tournament
-//      * Saturday, Nov 7, 2026  -> End of Year Tournament (season finale)
+//  - Extra one-off events (e.g. the end-of-year tournaments) go in `extras`.
 //
-// The rotation is anchored to Thursday, July 23, 2026 = Akron, singles (index 0).
-// From that anchor everything else is computed, so the schedule is stable and
-// does not depend on the current date (today only affects which entry is
-// highlighted as "next").
+// The rotation is anchored to SEASON.anchor = Akron, singles (index 0).
+// Everything else is computed from it, so the schedule is stable and does not
+// depend on the current date (today only affects which entry is "next").
+//
+// SEASON is null between seasons: the Schedule page then shows "coming soon".
 
 export type ScheduleLocation = "Akron" | "Rochester"
 
@@ -31,26 +30,21 @@ export interface ScheduleEntry {
   label: string
 }
 
-// Rotation anchor: Thursday, July 23, 2026.
-const ANCHOR = new Date(2026, 6, 23) // month is 0-indexed (6 = July)
-
-// How many Thursdays to generate from the anchor (through the season).
-// The last regular league Thursday is Nov 5, 2026, which is index 15.
-const LAST_INDEX = 15
-
-// Special dates.
-const DOUBLES_TOURNAMENT = new Date(2026, 10, 5) // Thu, Nov 5, 2026
-const SEASON_FINALE = new Date(2026, 10, 7) // Sat, Nov 7, 2026
-
-// One-off changes to the rotation, keyed by "YYYY-MM-DD". Only the listed
-// nights change, and only the fields given; the rest of the rotation is
-// unaffected.
-const OVERRIDES: Record<string, { location?: ScheduleLocation; doubles?: boolean; time?: string }> = {
-  "2026-10-08": { location: "Akron", doubles: false },
-  "2026-10-15": { location: "Akron", doubles: true },
-  "2026-10-29": { time: "5:30 PM" },
-  "2026-11-05": { location: "Akron", time: "5:30 PM" },
+interface SeasonConfig {
+  /** First rotation Thursday (index 0 = Akron, singles). */
+  anchor: Date
+  /** Rotation indexes to generate, inclusive. */
+  firstIndex: number
+  lastIndex: number
+  /** One-off changes to a rotation night, keyed by "YYYY-MM-DD". */
+  overrides?: Record<string, { location?: ScheduleLocation; doubles?: boolean; time?: string; label?: string; tournament?: boolean }>
+  /** Standalone events outside the Thursday rotation. */
+  extras?: ScheduleEntry[]
 }
+
+// 2027 season: not set yet.
+// Example: { anchor: new Date(2027, 3, 1), firstIndex: 0, lastIndex: 30 }  (month is 0-indexed)
+const SEASON: SeasonConfig | null = null
 
 function dateKey(d: Date): string {
   const mm = String(d.getMonth() + 1).padStart(2, "0")
@@ -62,14 +56,6 @@ function addDays(base: Date, days: number): Date {
   const d = new Date(base)
   d.setDate(d.getDate() + days)
   return d
-}
-
-function isSameDay(a: Date, b: Date): boolean {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  )
 }
 
 /** Location for a given rotation index: even = Akron, odd = Rochester. */
@@ -87,42 +73,26 @@ function isDoublesIndex(index: number): boolean {
  * Deterministic — does not depend on the current date.
  */
 export function getSchedule(): ScheduleEntry[] {
+  const season = SEASON as SeasonConfig | null
+  if (!season) return []
+
   const entries: ScheduleEntry[] = []
-
-  // Start at index 2: the Jul 23 and Jul 30 nights are removed from the
-  // schedule, but the anchor itself stays so the rotation is unchanged.
-  for (let i = 2; i <= LAST_INDEX; i++) {
-    const date = addDays(ANCHOR, i * 7)
-    const override = OVERRIDES[dateKey(date)]
-    const location = override?.location ?? locationForIndex(i)
+  for (let i = season.firstIndex; i <= season.lastIndex; i++) {
+    const date = addDays(season.anchor, i * 7)
+    const override = season.overrides?.[dateKey(date)]
     const doubles = override?.doubles ?? isDoublesIndex(i)
-    const isDoublesTournament = isSameDay(date, DOUBLES_TOURNAMENT)
-
     entries.push({
       date,
       time: override?.time ?? "6:00 PM",
-      location,
-      isDoubles: doubles || isDoublesTournament,
-      isTournament: isDoublesTournament,
-      label: isDoublesTournament
-        ? "End of Year Doubles Tournament"
-        : doubles
-          ? "Random Doubles"
-          : "Singles",
+      location: override?.location ?? locationForIndex(i),
+      isDoubles: doubles,
+      isTournament: override?.tournament ?? false,
+      label: override?.label ?? (doubles ? "Random Doubles" : "Singles"),
     })
   }
 
-  // Season finale (Saturday) — standalone tournament with no rotation slot.
-  entries.push({
-    date: SEASON_FINALE,
-    time: "10:00 AM",
-    location: "Rochester",
-    isDoubles: false,
-    isTournament: true,
-    label: "End of Year Tournament",
-  })
-
-  return entries
+  entries.push(...(season.extras ?? []))
+  return entries.sort((a, b) => a.date.getTime() - b.date.getTime())
 }
 
 /**

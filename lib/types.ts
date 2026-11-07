@@ -133,32 +133,21 @@ export interface AceWithPlayer extends Ace {
   player: Player
 }
 
-// Season settings
-//
-// 2026 restart: the database was wiped late in the season, so the rest of 2026
-// runs on temporary rules. FOR NEXT SEASON: set MIN_HANDICAP_ROUNDS back to 3,
-// FIVE_ROUNDS_DROP back to 1, COUNT_MEMBERSHIP_FEES back to true, and
-// MONEY_RESTART to null.
+// Season settings (standard rules, 2027 on)
 
-/** Rounds a player needs before they get their own handicap. Normally 3. */
-export const MIN_HANDICAP_ROUNDS = 1
+/** Rounds a player needs before they get their own handicap. */
+export const MIN_HANDICAP_ROUNDS = 3
 
-/** Worst rounds dropped when a player has exactly 5 rounds. Normally 1;
- *  2 for the rest of 2026. */
-export const FIVE_ROUNDS_DROP = 2
+/** Worst rounds dropped when a player has exactly 5 rounds. */
+export const FIVE_ROUNDS_DROP = 1
 
-/** Count $25 per member in money collected. Off for 2026: fees paid before the
- *  wipe are already in the cash count below. */
-export const COUNT_MEMBERSHIP_FEES = false
+/** Count $25 per member in money collected. */
+export const COUNT_MEMBERSHIP_FEES = true
 
-/** Money restart point. Weeks up to and including `afterWeek` are already
- *  accounted for in `startingCash` (the physical cash count), so they are left
- *  out of the money totals. After that, each player's first round since the
- *  wipe is free. */
-export const MONEY_RESTART: { afterWeek: number; startingCash: number } | null = {
-  afterWeek: 21,
-  startingCash: 1076,
-}
+/** Mid-season money restart (only used after a data wipe). Weeks up to and
+ *  including `afterWeek` are covered by `startingCash` and left out of the
+ *  money totals. null = normal season. */
+export const MONEY_RESTART: { afterWeek: number; startingCash: number } | null = null
 
 // Calculation helpers
 export const PAR = 54
@@ -171,9 +160,8 @@ export const PAR = 54
 // - Use only the most recent 10 rounds
 // - Require MIN_HANDICAP_ROUNDS rounds to establish a handicap
 // - Scale drops based on rounds played (see handicapDropCount):
-//   - 1-3 rounds: drop 0
-//   - 4 rounds: drop 1
-//   - 5 rounds: drop FIVE_ROUNDS_DROP
+//   - 3 rounds: drop 0
+//   - 4-5 rounds: drop 1
 //   - 6+ rounds: drop 2
 
 /** How many worst rounds are dropped for a given number of rounds (max 10). */

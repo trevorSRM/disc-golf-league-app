@@ -1,5 +1,4 @@
-import { getPlayersWithStats, getLatestSubmittedEvent, getFinances, getAces, getSubmittedEvents, getHandicapsForEvent, getFinaleStatus } from "@/lib/data"
-import { FinaleBanner } from "@/components/finale/finale-banner"
+import { getPlayersWithStats, getLatestSubmittedEvent, getFinances, getAces, getSubmittedEvents, getHandicapsForEvent } from "@/lib/data"
 import { DashboardHero } from "@/components/dashboard-hero"
 import { LeaderboardCard } from "@/components/leaderboard-card"
 import { LatestWeekCard } from "@/components/latest-week-card"
@@ -10,13 +9,12 @@ import { QuickStatsCard } from "@/components/quick-stats-card"
 
 // In-season home page.
 export async function Dashboard() {
-  const [players, latestEvent, finances, aces, events, finaleStatus] = await Promise.all([
+  const [players, latestEvent, finances, aces, events] = await Promise.all([
     getPlayersWithStats(),
     getLatestSubmittedEvent(),
     getFinances(),
     getAces(),
     getSubmittedEvents(),
-    getFinaleStatus()
   ])
   
   // Get handicaps for the latest event (based on prior events only)
@@ -40,9 +38,6 @@ export async function Dashboard() {
       />
       
       <div className="container mx-auto px-4 pt-6">
-        <div className="mb-6">
-          <FinaleBanner {...finaleStatus} />
-        </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {/* Latest Event Results */}
           <div className="lg:col-span-2">
